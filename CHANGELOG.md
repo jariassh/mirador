@@ -8,6 +8,14 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 
 ## [No publicado]
 
+## [1.0.3] — 2026-09-15
+
+### Corregido
+
+- Quedaban rastros del nombre provisional del proyecto en sitios que sí se
+  ven: el `<title>` y el `aria-label` de los SVG del ícono —que es lo que
+  anuncia un lector de pantalla— y las etiquetas del lienzo de diseño.
+
 ## [1.0.2] — 2026-09-15
 
 ### Cambiado

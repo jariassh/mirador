@@ -1,17 +1,32 @@
 {
+  "pages": [
+    { "id": "page-1", "name": "El ícono" },
+    { "id": "page-2", "name": "Exploración" }
+  ],
   "artboards": [
     {
       "file": "Main.dc.html",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 1240,
+      "h": 800,
+      "title": "Mirador"
+    },
+    {
+      "file": "Direcciones.dc.html",
+      "page": "page-2",
       "x": 0,
       "y": 0,
       "w": 1240,
       "h": 740,
-      "title": "Cuatro direcciones"
+      "title": "Las cuatro direcciones"
     },
     {
       "file": "Contexto.dc.html",
+      "page": "page-2",
       "x": 0,
-      "y": 860,
+      "y": 920,
       "w": 1240,
       "h": 660,
       "title": "En el escritorio"
@@ -19,12 +34,13 @@
   ],
   "annotations": [
     {
-      "id": "nota-decision",
+      "id": "nota-eleccion",
       "x": 1320,
       "y": 0,
+      "page": "page-2",
       "w": 300,
-      "text": "Elige una letra (A, B, C o D).\n\nCon la elegida hago:\n- versión simplificada para 16 px\n- el .ico de Windows con todos los tamaños\n- el SVG editable para el repo"
+      "text": "Se eligió la B — Señal.\n\nRazón: es la que mejor aguanta a 16 px, que es el tamaño de la barra de tareas y donde se cae todo lo que sobra.\n\nLas otras tres quedan acá como registro de por qué."
     }
   ],
-  "launch": { "view": "canvas" }
+  "launch": { "view": "canvas", "page": "page-1" }
 }

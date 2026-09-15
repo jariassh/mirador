@@ -52,6 +52,15 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 - Ya **no aparece una ventana negra de consola** cuando Mirador necesita pedir
   permisos de administrador para instalar scrcpy.
 
+### Instalación
+
+- **Instalador de Windows normal (`MiradorSetup.exe`).** Doble clic, siguiente,
+  listo — ya no hace falta escribir nada en la terminal. No pide permisos de
+  administrador, crea los accesos directos y aparece en «Agregar o quitar
+  programas» para desinstalarlo como cualquier otro programa.
+- La instalación manual con `instalar.ps1` sigue funcionando igual, y las dos
+  usan la misma carpeta.
+
 ## [1.0.5] — 2026-09-15
 
 ### Agregado

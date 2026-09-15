@@ -82,24 +82,33 @@ No hace falta instalar scrcpy ni adb: Mirador se encarga la primera vez.
 
 ## Instalación
 
-**1. Descarga el proyecto**
+**1. Descarga `MiradorSetup.exe`** desde [Releases](../../releases).
 
-Desde [Releases](../../releases) descarga el `.zip` y descomprímelo,
-o si tienes git:
+**2. Ábrelo y dale a Siguiente.** Se instala en tu carpeta de usuario, crea el
+acceso directo en el Escritorio y en el menú Inicio, y queda en «Agregar o
+quitar programas» por si algún día lo quieres quitar. **No pide permisos de
+administrador.**
+
+> **Windows va a mostrarte un aviso** que dice que no reconoce la aplicación.
+> Es lo normal con el software de desarrolladores independientes: para que no
+> salga hay que pagar un certificado de firma de unos 200 dólares al año, y
+> Mirador es gratuito. Pulsa **«Más información» → «Ejecutar de todas formas»**.
+> Si prefieres no fiarte de mi palabra —y haces bien—, el código está completo
+> en este repositorio y puedes leerlo antes: es un solo archivo de texto.
+
+<details>
+<summary>¿Prefieres instalarlo sin el <code>.exe</code>?</summary>
+
+Descarga el código y ejecuta el instalador de PowerShell. Hace exactamente lo
+mismo y usa la misma carpeta:
 
 ```powershell
 git clone https://github.com/jariassh/mirador.git
 cd mirador
-```
-
-**2. Ejecuta el instalador**
-
-```powershell
 powershell -ExecutionPolicy Bypass -File .\instalar.ps1
 ```
 
-Eso copia Mirador a tu carpeta de usuario y crea el acceso directo en el
-Escritorio y en el menú Inicio. **No pide permisos de administrador.**
+</details>
 
 **3. Prepara el teléfono** (una sola vez)
 
@@ -153,19 +162,25 @@ Mirador deja un registro de lo que intentó:
 
 ## Desinstalar
 
+Si lo instalaste con `MiradorSetup.exe`, quítalo desde **Configuración ›
+Aplicaciones › Aplicaciones instaladas**, como cualquier otro programa.
+
+Si lo instalaste con el script:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\instalar.ps1 -Desinstalar
 ```
 
-Quita el acceso directo y la carpeta. **No toca scrcpy ni adb** — si también
-los quieres quitar: `winget uninstall Genymobile.scrcpy`.
+Las dos vías quitan el acceso directo y la carpeta. **Ninguna toca scrcpy ni
+adb** — si también los quieres quitar: `winget uninstall Genymobile.scrcpy`.
 
 ## Estructura
 
 ```
 mirador/
 ├── mirador.ps1        el asistente
-├── instalar.ps1       instalador y desinstalador
+├── instalar.ps1       instalador y desinstalador por línea de comandos
+├── instalador/        el guion de Inno Setup que produce MiradorSetup.exe
 └── recursos/          el ícono (.ico y .svg editables) y las capturas
 ```
 

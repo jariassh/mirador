@@ -213,12 +213,57 @@ se ve «normal» y no conecta nunca; nadie diagnostica eso a mano.
 - **Caso feliz:** los 7 chequeos en verde en 1,2 s con los dos teléfonos.
 - **Visual:** capturado el diálogo, que resume «Todo en orden» y lista los siete.
 
+## `M-6` — orden visual de los diálogos
+
+**De dónde sale.** Jonathan, viendo las capturas: _«si se pueden diseñar ui,
+trata que queden bonitas, sino pues al menos que los botones queden
+correctamente organizados y no desordenados»_. Tenía razón: los botones se
+habían ido agregando de a uno y cada uno traía su propio ancho —110, 130, 150,
+250— con los bordes sin coincidir con nada.
+
+**Qué se hizo.** Dos ayudantes que ahora usan todas las ventanas:
+
+- `Nuevo-Encabezado` — franja blanca con el título en grande, una línea de
+  apoyo en gris y un separador de 1 píxel. Devuelve la Y donde empieza el
+  contenido, así ninguna ventana calcula ese margen a mano.
+- `Nueva-BarraBotones` — botones del **mismo ancho**, alineados a la derecha y
+  con la acción principal de última, como en cualquier programa de Windows. La
+  posición se calcula desde `ClientSize`, no a ojo.
+
+Además, la pantalla de «No se encontró ningún celular» quedó con jerarquía: la
+acción principal sola y a todo el ancho, las cuatro secundarias en una reja de
+2×2 del mismo tamaño, y Cancelar aparte abajo a la derecha.
+
+Y las ventanas ahora cargan **el ícono de Mirador** en vez del de PowerShell,
+que es lo primero que delata que algo es un script y no un programa. Se busca
+en los dos sitios donde puede estar: junto al script (como queda instalado) y
+en `recursos\` (como está en el repositorio).
+
+**Dos desbordes que solo se vieron capturando:**
+
+- La barra de la guía por marca se salía por la izquierda: tres botones de 168
+  px más separaciones no entran en 540. Quedaron en 160.
+- La lista de marcas dejaba un hueco vacío abajo; se ajustó el alto al
+  contenido real.
+
+**Regresión verificada, que era el riesgo de verdad:** mover los manejadores
+dentro de las definiciones de la barra podía romper los cierres de PowerShell
+en silencio. Se repitió la prueba de teclado —abajo, abajo, Enter— y siguió
+devolviendo `Motorola`, y los chequeos de `M-3` siguen los 7 en verde.
+
+> **Nota sobre la regla de Stitch.** El `CLAUDE.md` del workspace pide diseñar
+> en Stitch antes de implementar UI. Acá no aplica tal cual: son diálogos
+> nativos de Windows Forms, y un mockup web no representaría lo que se ve. Se
+> cumplió el fondo de la regla —mostrar el diseño y esperar aprobación— con
+> **capturas reales del antes y el después**, que además son más fieles.
+
 ## Estado al cerrar
 
 - `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.
 - `M-5` cerrado — estudio de nombres hecho y decidido: sigue siendo Mirador.
 - `M-2` cerrado — asistente de preparación, verificado contra dos teléfonos.
 - `M-3` cerrado — diagnóstico en un clic, con el caso de fallo probado.
+- `M-6` cerrado — orden visual de los diálogos, con la regresión verificada.
 - Abierto: `M-4` (la vitrina: GIF, instalador Inno Setup, README y volver a
   público).
 - El `CLAUDE.md` del workspace decía **(PÚBLICO)**; quedó corregido a privado

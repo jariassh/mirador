@@ -34,6 +34,11 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 - Cuando no se logra conectar, Mirador ya no te manda a abrir un archivo de
   registro con el Bloc de notas: **te ofrece revisar el equipo** y te responde
   en pantalla.
+- **Las ventanas se ven ordenadas.** Cada una abre con su título arriba y una
+  línea que explica de qué se trata, los botones tienen todos el mismo tamaño y
+  quedan alineados, y la acción principal está siempre a la derecha, como en
+  cualquier programa de Windows.
+- Las ventanas ahora llevan **el ícono de Mirador** en vez del de PowerShell.
 
 ## [1.0.5] — 2026-09-15
 

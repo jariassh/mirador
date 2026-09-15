@@ -8,6 +8,16 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 
 ## [No publicado]
 
+## [1.0.2] — 2026-09-15
+
+### Cambiado
+
+- El lienzo de diseño del ícono pasa a mostrar la pieza final —los tres
+  dibujos, los siete tamaños y la paleta— en vez de las cuatro propuestas
+  iniciales, que quedan en una segunda página como registro de por qué se
+  eligió esa. De paso desaparece del repositorio el nombre provisional con
+  que nació el proyecto.
+
 ## [1.0.1] — 2026-09-15
 
 ### Corregido

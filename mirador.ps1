@@ -173,6 +173,8 @@ function Nueva-Ventana {
     $f.MinimizeBox     = $false
     $f.TopMost         = $true
     $f.Font            = New-Object System.Drawing.Font('Segoe UI', 9)
+    $ico = Obtener-Icono
+    if ($ico) { $f.Icon = $ico }
     return $f
 }
 
@@ -184,6 +186,116 @@ function Nueva-Etiqueta {
     $l.Size     = New-Object System.Drawing.Size($Ancho, $Alto)
     if ($Negrita) { $l.Font = New-Object System.Drawing.Font('Segoe UI', 9, [System.Drawing.FontStyle]::Bold) }
     return $l
+}
+
+<#
+    El icono de la aplicacion. Sin esto las ventanas salen con el icono de
+    PowerShell, que es lo primero que delata que esto es un script y no un
+    programa. Se busca en los dos sitios donde puede estar: junto al script
+    (como queda instalado) y en recursos\ (como esta en el repositorio).
+#>
+$script:IconoApp = $null
+function Obtener-Icono {
+    if ($script:IconoApp) { return $script:IconoApp }
+    foreach ($ruta in @(
+        (Join-Path $PSScriptRoot 'mirador.ico'),
+        (Join-Path $PSScriptRoot 'recursos\mirador.ico')
+    )) {
+        if (Test-Path $ruta) {
+            try { $script:IconoApp = New-Object System.Drawing.Icon($ruta); return $script:IconoApp }
+            catch { Escribir-Log "No se pudo cargar el icono: $($_.Exception.Message)" }
+        }
+    }
+    return $null
+}
+
+<#
+    Encabezado de ventana: franja blanca con el titulo grande y una linea de
+    apoyo en gris. Da jerarquia sin pedirle al usuario que lea todo el cuerpo
+    para entender de que se trata la ventana.
+
+    Devuelve la Y donde puede empezar el contenido.
+#>
+function Nuevo-Encabezado {
+    param(
+        [System.Windows.Forms.Form] $Ventana,
+        [string] $Titulo,
+        [string] $Subtitulo = ''
+    )
+
+    $alto = if ($Subtitulo) { 66 } else { 50 }
+
+    $panel = New-Object System.Windows.Forms.Panel
+    $panel.Location  = New-Object System.Drawing.Point(0, 0)
+    $panel.Size      = New-Object System.Drawing.Size($Ventana.ClientSize.Width, $alto)
+    $panel.BackColor = [System.Drawing.Color]::White
+    $Ventana.Controls.Add($panel)
+
+    $lblT = New-Object System.Windows.Forms.Label
+    $lblT.Text      = $Titulo
+    $lblT.Location  = New-Object System.Drawing.Point(20, 14)
+    $lblT.Size      = New-Object System.Drawing.Size(($Ventana.ClientSize.Width - 40), 24)
+    $lblT.Font      = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
+    $lblT.ForeColor = [System.Drawing.Color]::FromArgb(23, 23, 23)
+    $panel.Controls.Add($lblT)
+
+    if ($Subtitulo) {
+        $lblS = New-Object System.Windows.Forms.Label
+        $lblS.Text      = $Subtitulo
+        $lblS.Location  = New-Object System.Drawing.Point(20, 40)
+        $lblS.Size      = New-Object System.Drawing.Size(($Ventana.ClientSize.Width - 40), 18)
+        $lblS.ForeColor = [System.Drawing.Color]::FromArgb(96, 96, 96)
+        $panel.Controls.Add($lblS)
+    }
+
+    # La linea de separacion se dibuja como un panel de 1 pixel: es lo mas
+    # barato que se ve bien en los dos temas de Windows.
+    $linea = New-Object System.Windows.Forms.Panel
+    $linea.Location  = New-Object System.Drawing.Point(0, ($alto - 1))
+    $linea.Size      = New-Object System.Drawing.Size($Ventana.ClientSize.Width, 1)
+    $linea.BackColor = [System.Drawing.Color]::FromArgb(222, 222, 222)
+    $Ventana.Controls.Add($linea)
+    $linea.BringToFront()
+
+    return ($alto + 14)
+}
+
+<#
+    Barra de botones alineada a la DERECHA, todos del mismo ancho.
+
+    Es la regla que ordena las ventanas: antes cada boton tenia su ancho y su
+    posicion propia -110, 130, 150, 250- y los bordes no coincidian con nada.
+    Windows pone las acciones abajo a la derecha y la principal de ultima; con
+    esto todas las ventanas de Mirador se ven iguales sin tener que calcular
+    coordenadas a mano en cada una.
+
+    $Definiciones: arreglo de hashtables @{ Texto = '...'; Accion = { ... } }.
+    Devuelve los botones creados, en el mismo orden.
+#>
+function Nueva-BarraBotones {
+    param(
+        [System.Windows.Forms.Form] $Ventana,
+        [array] $Definiciones,
+        [int] $Y,
+        [int] $Ancho = 150,
+        [int] $Alto = 32,
+        [int] $Separacion = 10,
+        [int] $Margen = 20
+    )
+
+    $n     = $Definiciones.Count
+    $total = ($n * $Ancho) + (($n - 1) * $Separacion)
+    $x     = $Ventana.ClientSize.Width - $Margen - $total
+
+    $creados = @()
+    foreach ($d in $Definiciones) {
+        $b = Nuevo-Boton $d.Texto $x $Y $Ancho $Alto
+        if ($d.Accion) { $b.Add_Click($d.Accion) }
+        $Ventana.Controls.Add($b)
+        $creados += $b
+        $x += $Ancho + $Separacion
+    }
+    return $creados
 }
 
 function Nuevo-Boton {
@@ -199,10 +311,37 @@ function Nuevo-Boton {
 # Instalacion de scrcpy (trae adb en el mismo paquete)
 # ---------------------------------------------------------------------------
 
-function Asegurar-Scrcpy {
-    if (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue) { return $true }
+function Hay-Scrcpy { return [bool] (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue) }
+function Hay-Adb    { return [bool] (Get-Command $script:AdbExe    -ErrorAction SilentlyContinue) }
 
-    Escribir-Log 'scrcpy no esta instalado'
+<#
+    Deja el COMPUTADOR listo: scrcpy y adb.
+
+    adb no viene con Windows — lo trae el paquete de scrcpy, en su misma
+    carpeta. Por eso casi siempre aparecen juntos... pero no siempre: un
+    scrcpy descomprimido a mano desde un .zip, o un atajo roto, deja scrcpy
+    en el PATH y adb fuera.
+
+    Comprobar solo scrcpy hacia que Mirador arrancara creyendo que todo
+    estaba bien y fallara mas adelante disfrazado de "no se encontro ningun
+    celular", que manda al usuario a revisar el telefono cuando el problema
+    estaba en el computador.
+#>
+function Asegurar-Scrcpy {
+    if ((Hay-Scrcpy) -and (Hay-Adb)) { return $true }
+
+    if ((Hay-Scrcpy) -and -not (Hay-Adb)) {
+        Escribir-Log 'scrcpy esta pero adb no'
+        $r = [System.Windows.Forms.MessageBox]::Show(
+            "Tienes scrcpy, pero falta «adb», que es la pieza que habla con el teléfono.`n`nWindows no lo trae: viene dentro del mismo paquete de scrcpy.`n`n¿Quieres que lo instale ahora?",
+            'Mirador', 'YesNo', 'Warning')
+        if ($r -ne 'Yes') {
+            Escribir-Log 'El usuario no quiso instalar adb'
+            return $false
+        }
+    } else {
+        Escribir-Log 'scrcpy no esta instalado'
+    }
 
     # winget primero: instala sin pedir permisos de administrador.
     if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -211,7 +350,7 @@ function Asegurar-Scrcpy {
         & winget install --id Genymobile.scrcpy --exact --silent `
             --accept-source-agreements --accept-package-agreements | Out-Null
         Refrescar-Path
-        if (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue) {
+        if ((Hay-Scrcpy) -and (Hay-Adb)) {
             Escribir-Log 'Instalado con winget'
             return $true
         }
@@ -224,8 +363,11 @@ function Asegurar-Scrcpy {
 
     if (-not $esAdmin) {
         Mostrar-Mensaje "Hay que instalar scrcpy y Windows va a pedir permiso de administrador."
+        # -WindowStyle Hidden tambien aca: sin el, la instancia elevada
+        # arrancaba con la consola negra a la vista, que es justo lo que el
+        # resto del programa evita.
         Start-Process powershell -Verb RunAs -ArgumentList `
-            "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+            "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`""
         return $false
     }
 
@@ -242,8 +384,9 @@ function Asegurar-Scrcpy {
     & choco install scrcpy -y | Out-Null
     Refrescar-Path
 
-    if (-not (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue)) {
-        Mostrar-Mensaje "No se pudo instalar scrcpy. Instálalo a mano con 'winget install Genymobile.scrcpy'." 'Mirador' 'Error'
+    if (-not ((Hay-Scrcpy) -and (Hay-Adb))) {
+        $falta = if (Hay-Scrcpy) { 'adb' } else { 'scrcpy' }
+        Mostrar-Mensaje "No se pudo dejar listo «$falta».`n`nInstálalo a mano con este comando y vuelve a abrir Mirador:`n`nwinget install Genymobile.scrcpy" 'Mirador' 'Error'
         return $false
     }
 
@@ -589,24 +732,26 @@ function Limpiar-Muertos {
 # ---------------------------------------------------------------------------
 
 function Mostrar-Emparejamiento {
-    $f = Nueva-Ventana 'Emparejar por Wi-Fi' 470 330
+    $f = Nueva-Ventana 'Emparejar por Wi-Fi' 500 424
 
-    $f.Controls.Add((Nueva-Etiqueta 'En el teléfono:' 20 15 420 -Negrita))
-    $f.Controls.Add((Nueva-Etiqueta "Ajustes › Opciones de desarrollador › Depuración inalámbrica ›`nVincular dispositivo con código de vinculación" 20 38 420 40))
+    $y = Nuevo-Encabezado $f 'Emparejar por Wi-Fi' 'Se hace una sola vez con cada teléfono'
 
-    $f.Controls.Add((Nueva-Etiqueta 'Dirección y puerto de vinculación' 20 92 300))
+    $f.Controls.Add((Nueva-Etiqueta 'En el teléfono:' 20 $y 444 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta "Ajustes › Opciones de desarrollador › Depuración inalámbrica ›`nVincular dispositivo con código de vinculación" 20 ($y + 23) 444 40))
+
+    $f.Controls.Add((Nueva-Etiqueta 'Dirección y puerto de vinculación' 20 ($y + 77) 300))
     $txtDir = New-Object System.Windows.Forms.TextBox
-    $txtDir.Location = New-Object System.Drawing.Point(20, 113)
+    $txtDir.Location = New-Object System.Drawing.Point(20, ($y + 98))
     $txtDir.Size     = New-Object System.Drawing.Size(280, 24)
     $f.Controls.Add($txtDir)
 
-    $lblAuto = Nueva-Etiqueta '' 20 141 420 18
+    $lblAuto = Nueva-Etiqueta '' 20 ($y + 126) 444 18
     $lblAuto.ForeColor = [System.Drawing.Color]::FromArgb(0, 120, 60)
     $f.Controls.Add($lblAuto)
 
-    $f.Controls.Add((Nueva-Etiqueta 'Código de 6 dígitos' 20 168 300))
+    $f.Controls.Add((Nueva-Etiqueta 'Código de 6 dígitos' 20 ($y + 153) 300))
     $txtCodigo = New-Object System.Windows.Forms.TextBox
-    $txtCodigo.Location  = New-Object System.Drawing.Point(20, 189)
+    $txtCodigo.Location  = New-Object System.Drawing.Point(20, ($y + 174))
     $txtCodigo.Size      = New-Object System.Drawing.Size(120, 24)
     $txtCodigo.MaxLength = 6
     $f.Controls.Add($txtCodigo)
@@ -614,7 +759,7 @@ function Mostrar-Emparejamiento {
     # Se autocompleta la dirección: mientras el teléfono muestra el código,
     # anuncia el servicio de vinculación por mDNS. Así solo hay que teclear
     # los 6 dígitos, que es lo único que el computador no puede adivinar.
-    $btnDetectar = Nuevo-Boton 'Detectar' 310 112 120 26
+    $btnDetectar = Nuevo-Boton 'Detectar' 310 ($y + 97) 120 26
     $btnDetectar.Add_Click({
         $d = Obtener-ServicioEmparejamiento
         if ($d) {
@@ -627,12 +772,12 @@ function Mostrar-Emparejamiento {
     })
     $f.Controls.Add($btnDetectar)
 
-    $lblEstado = Nueva-Etiqueta '' 20 222 420 18
+    $lblEstado = Nueva-Etiqueta '' 20 ($y + 207) 444 18
     $f.Controls.Add($lblEstado)
 
     $resultado = [pscustomobject]@{ Exito = $false }
 
-    $btnEmparejar = Nuevo-Boton 'Emparejar' 200 250 110
+    $btnEmparejar = Nuevo-Boton 'Emparejar' 344 ($y + 239) 140 32
     $btnEmparejar.Add_Click({
         $dir = $txtDir.Text.Trim()
         $cod = $txtCodigo.Text.Trim()
@@ -657,9 +802,11 @@ function Mostrar-Emparejamiento {
     })
     $f.Controls.Add($btnEmparejar)
 
-    $btnCancelar = Nuevo-Boton 'Cancelar' 320 250 110
+    $btnCancelar = Nuevo-Boton 'Cancelar' 194 ($y + 239) 140 32
     $btnCancelar.Add_Click({ $f.Close() })
     $f.Controls.Add($btnCancelar)
+    $f.CancelButton = $btnCancelar
+    $f.AcceptButton = $btnEmparejar
 
     $f.Add_Shown({
         $f.Activate()
@@ -673,40 +820,535 @@ function Mostrar-Emparejamiento {
 }
 
 # ---------------------------------------------------------------------------
+# Guias de preparacion del telefono, por marca
+# ---------------------------------------------------------------------------
+
+<#
+    Rutas de menu verificadas contra la documentacion de cada fabricante el
+    2026-09-15.
+
+    El nombre del menu CAMBIA por marca, y ese es el punto entero de esta
+    tabla: en Xiaomi los siete toques van sobre "Version de MIUI" y no sobre
+    "Numero de compilacion", y las Opciones de desarrollador viven bajo
+    "Ajustes adicionales", no al final de Ajustes.
+
+    Cada marca es una fila. Agregar una marca nueva es agregar una fila, no
+    tocar el dialogo.
+
+    La fila de TECNO/Infinix NO sale de documentacion: de esa marca solo hay
+    videos. Se verifico sobre un TECNO KL4 con HiOS 14 real, leyendo el menu
+    con adb, y ahi aparecio que "Acerca del telefono" se llama "Mi telefono"
+    y que no existe el submenu "Informacion de software" que si tienen otras
+    marcas. La ruta que estaba escrita de memoria era incorrecta.
+
+    Para el resto de casos esta el boton "No veo esa opcion", que aplica a
+    TODAS las marcas: el menu real cambia entre versiones del mismo
+    fabricante, y quedarse sin salida es peor que una ruta imperfecta.
+#>
+
+$script:RutaGenerica = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nSi no encuentras el menú, abre Ajustes y usa el buscador (la lupa de arriba): escribe «compilación» para el primer paso, o «desarrollador» para el segundo."
+
+$script:GuiasPorMarca = [ordered]@{
+    'Samsung' = @{
+        Activar = "Ajustes  ›  Información del teléfono  ›  Información del software`n`nToca 7 veces seguidas sobre «Número de compilación»."
+        Depurar = "Ajustes  ›  Opciones de desarrollador`n(queda hasta abajo del todo en Ajustes)`n`nEnciende «Depuración USB»."
+    }
+    'Xiaomi / Redmi / POCO' = @{
+        Activar = "Ajustes  ›  Sobre el teléfono`n`nToca 7 veces seguidas sobre «Versión de MIUI» (o «Versión de HyperOS»).`n`nOjo: en Xiaomi NO se toca «Número de compilación» como en el resto."
+        Depurar = "Ajustes  ›  Ajustes adicionales  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Motorola' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nEn los modelos nuevos está en Ajustes › Sistema › Acerca del teléfono."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Huawei / Honor' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nTe va a pedir el PIN o el patrón de desbloqueo antes de activarlo."
+        Depurar = "Ajustes  ›  Sistema y actualizaciones  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Oppo / realme' = @{
+        Activar = "Ajustes  ›  Información del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación» (en algunas versiones está dentro de «Versión»)."
+        Depurar = "ColorOS 12 o más nuevo:`nAjustes  ›  Ajustes del sistema  ›  Opciones de desarrollador`n`nColorOS 11 o anterior:`nAjustes  ›  Ajustes adicionales  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'TECNO / Infinix' = @{
+        Activar = "Ajustes  ›  Mi teléfono`n`nEn HiOS y XOS, «Acerca del teléfono» se llama «Mi teléfono».`n`nBaja hasta abajo y toca 7 veces seguidas sobre «Número de compilación», que está al lado de «Versión de HiOS»."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Google Pixel' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación»."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones para desarrolladores`n`nEnciende «Depuración USB»."
+    }
+    'Otra marca' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nCasi todas las marcas lo tienen ahí. Si no aparece, usa el buscador de Ajustes (la lupa) y escribe «compilación»."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones de desarrollador`n`nSi no aparece, usa el buscador de Ajustes (la lupa) y escribe «desarrollador».`n`nEnciende «Depuración USB»."
+    }
+}
+
+<#
+    Traduce lo que reporta el fabricante a una de las filas de la tabla.
+
+    Solo sirve cuando adb YA ve el telefono: si la depuracion todavia no esta
+    activa no hay aparato que consultar, que es justamente el caso que este
+    asistente viene a resolver. Por eso es una sugerencia y no una deteccion:
+    la marca siempre la termina eligiendo el usuario.
+#>
+function Marca-Sugerida {
+    param([string] $Fabricante)
+
+    if ([string]::IsNullOrWhiteSpace($Fabricante)) { return '' }
+
+    switch -Wildcard ($Fabricante.ToLower()) {
+        '*samsung*'  { return 'Samsung' }
+        '*xiaomi*'   { return 'Xiaomi / Redmi / POCO' }
+        '*redmi*'    { return 'Xiaomi / Redmi / POCO' }
+        '*poco*'     { return 'Xiaomi / Redmi / POCO' }
+        '*motorola*' { return 'Motorola' }
+        '*lenovo*'   { return 'Motorola' }
+        '*huawei*'   { return 'Huawei / Honor' }
+        '*honor*'    { return 'Huawei / Honor' }
+        '*oppo*'     { return 'Oppo / realme' }
+        '*realme*'   { return 'Oppo / realme' }
+        '*oneplus*'  { return 'Oppo / realme' }
+        '*tecno*'    { return 'TECNO / Infinix' }
+        '*infinix*'  { return 'TECNO / Infinix' }
+        '*google*'   { return 'Google Pixel' }
+        default      { return '' }
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Dialogo: elegir la marca del telefono
+# ---------------------------------------------------------------------------
+
+function Mostrar-ElegirMarca {
+    param([string] $Sugerida)
+
+    $f = Nueva-Ventana 'Preparar mi teléfono' 456 382
+
+    $y = Nuevo-Encabezado $f '¿Qué marca es tu teléfono?' 'El menú se llama distinto en cada marca'
+
+    # Sin esta linea el usuario no tiene como saber que del lado del PC no le
+    # falta nada: scrcpy y adb ya quedaron instalados antes de llegar aca.
+    $f.Controls.Add((Nueva-Etiqueta 'El computador ya quedó listo. Esto es solo el teléfono.' 20 $y 400 18))
+    $y = $y + 26
+
+    $lista = New-Object System.Windows.Forms.ListBox
+    $lista.Location = New-Object System.Drawing.Point(20, $y)
+    $lista.Size     = New-Object System.Drawing.Size(400, 152)
+    $lista.BorderStyle = 'FixedSingle'
+    foreach ($m in $script:GuiasPorMarca.Keys) { $lista.Items.Add($m) | Out-Null }
+
+    if ($Sugerida -and $lista.Items.Contains($Sugerida)) {
+        $lista.SelectedItem = $Sugerida
+    } else {
+        $lista.SelectedIndex = 0
+    }
+    $f.Controls.Add($lista)
+
+    $elegido = [pscustomobject]@{ Valor = '' }
+
+    # Doble clic sobre la marca hace lo mismo que Siguiente: es lo que la
+    # gente intenta sin pensarlo.
+    $lista.Add_DoubleClick({ $elegido.Valor = [string] $lista.SelectedItem; $f.Close() })
+
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Cancelar';  Accion = { $elegido.Valor = ''; $f.Close() } },
+        @{ Texto = 'Siguiente'; Accion = { $elegido.Valor = [string] $lista.SelectedItem; $f.Close() } }
+    ) 278 140
+    $f.CancelButton = $botones[0]
+    $f.AcceptButton = $botones[1]
+
+    $f.Add_Shown({ $f.Activate() })
+    $f.ShowDialog() | Out-Null
+
+    return $elegido.Valor
+}
+
+# ---------------------------------------------------------------------------
+# Dialogo: los dos pasos de la guia
+# ---------------------------------------------------------------------------
+
+<#
+    Los dos pasos van en UNA sola pantalla a proposito. Son cortos y se hacen
+    seguidos, con el telefono en la mano: partirlos en dos ventanas agrega
+    clics sin agregar claridad.
+#>
+function Mostrar-GuiaMarca {
+    param([string] $Marca)
+
+    $guia = $script:GuiasPorMarca[$Marca]
+    $f    = Nueva-Ventana "Preparar mi teléfono" 556 540
+
+    $y = Nuevo-Encabezado $f "Preparar un $Marca" 'Dos pasos, una sola vez'
+
+    $f.Controls.Add((Nueva-Etiqueta "Paso 1 · Activa las Opciones de desarrollador" 20 $y 500 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta $guia.Activar 20 ($y + 24) 500 112))
+
+    $f.Controls.Add((Nueva-Etiqueta "Paso 2 · Enciende la depuración" 20 ($y + 146) 500 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta $guia.Depurar 20 ($y + 170) 500 115))
+
+    $f.Controls.Add((Nueva-Etiqueta "Para usarlo sin cable, enciende además «Depuración inalámbrica» en esa misma pantalla. Necesita Android 11 o superior." 20 ($y + 299) 500 46))
+
+    $accion = [pscustomobject]@{ Valor = 'cancelar' }
+
+    # "No veo esa opcion" es la salida de emergencia, y aplica a todas las
+    # marcas: el menu real cambia entre versiones del mismo fabricante, y
+    # quedarse sin salida es peor que una ruta imperfecta.
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'No veo esa opción'; Accion = {
+            Mostrar-Mensaje "Ruta que sirve en casi todos los Android:`n`n$($script:RutaGenerica)" 'Preparar mi teléfono'
+        } },
+        @{ Texto = 'Atrás';                   Accion = { $accion.Valor = 'atras';      $f.Close() } },
+        @{ Texto = 'Listo, busca mi teléfono'; Accion = { $accion.Valor = 'reintentar'; $f.Close() } }
+    ) 448 160
+    $f.AcceptButton = $botones[2]
+
+    $f.Add_Shown({ $f.Activate() })
+    $f.ShowDialog() | Out-Null
+
+    return $accion.Valor
+}
+
+# ---------------------------------------------------------------------------
+# Asistente completo de preparacion
+# ---------------------------------------------------------------------------
+
+function Mostrar-Preparacion {
+    param([array] $Detectados)
+
+    $sugerida = ''
+    foreach ($d in @($Detectados)) {
+        if ($d.Estado -eq 'device') {
+            $sugerida = Marca-Sugerida (Obtener-Propiedad $d.Id 'ro.product.manufacturer')
+            if ($sugerida) { break }
+        }
+    }
+    if ($sugerida) { Escribir-Log "Marca sugerida por adb: $sugerida" }
+
+    while ($true) {
+        $marca = Mostrar-ElegirMarca $sugerida
+        if ([string]::IsNullOrWhiteSpace($marca)) {
+            Escribir-Log 'Preparacion cancelada en la eleccion de marca'
+            return 'cancelar'
+        }
+
+        Escribir-Log "Guia de preparacion mostrada: $marca"
+        $r = Mostrar-GuiaMarca $marca
+        if ($r -ne 'atras') { return $r }
+
+        $sugerida = $marca
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Diagnostico: revisar el equipo y decir que falta
+# ---------------------------------------------------------------------------
+
+<#
+    El registro en mirador.log sirve para quien sabe leerlo. Para el resto no
+    existe: decirle "abre el .log con el Bloc de notas" equivale a no decir
+    nada.
+
+    Esta seccion recorre las mismas condiciones que el log deja escritas, pero
+    las responde en espanol y con la accion concreta al lado. Cada chequeo
+    devuelve un objeto, no texto, para que la ventana decida como pintarlo y
+    para poder contar cuantos fallaron.
+#>
+
+function Nuevo-Chequeo {
+    param(
+        [string] $Titulo,
+        [ValidateSet('ok', 'aviso', 'falla')] [string] $Estado,
+        [string] $Detalle = '',
+        [string] $Sugerencia = ''
+    )
+    return [pscustomobject]@{
+        Titulo     = $Titulo
+        Estado     = $Estado
+        Detalle    = $Detalle
+        Sugerencia = $Sugerencia
+    }
+}
+
+<#
+    Responde si un puerto TCP acepta conexion, sin colgar la ventana.
+
+    Test-NetConnection haria lo mismo, pero su tiempo de espera no se puede
+    bajar y tarda varios segundos por direccion muerta, que es justo el caso
+    frecuente aqui: el telefono que ya no esta en la red.
+#>
+function Responde-Puerto {
+    param([string] $Direccion, [int] $Puerto, [int] $Milisegundos = 800)
+
+    $cliente = New-Object System.Net.Sockets.TcpClient
+    try {
+        $intento = $cliente.BeginConnect($Direccion, $Puerto, $null, $null)
+        if (-not $intento.AsyncWaitHandle.WaitOne($Milisegundos, $false)) { return $false }
+        $cliente.EndConnect($intento)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $cliente.Close()
+    }
+}
+
+function Obtener-IPsLocales {
+    try {
+        $todas = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop |
+            Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.PrefixOrigin -ne 'WellKnown' })
+
+        # Los adaptadores virtuales -WSL, Hyper-V, VirtualBox- aparecen como
+        # una red mas y confunden: el usuario ve una IP que no es la suya.
+        # Una VPN, en cambio, NO se filtra a proposito: es justo la causa que
+        # este chequeo existe para descubrir.
+        $reales = @($todas | Where-Object {
+            $_.InterfaceAlias -notmatch 'vEthernet|WSL|Hyper-V|VirtualBox|VMware|Loopback'
+        })
+        if ($reales.Count -eq 0) { $reales = $todas }
+
+        return @($reales | Select-Object -ExpandProperty IPAddress)
+    } catch {
+        Escribir-Log "No se pudieron leer las IPs locales: $($_.Exception.Message)"
+        return @()
+    }
+}
+
+function Misma-Red {
+    param([string] $Una, [string] $Otra)
+    $a = $Una  -split '\.'
+    $b = $Otra -split '\.'
+    if ($a.Count -ne 4 -or $b.Count -ne 4) { return $false }
+    return ("$($a[0]).$($a[1]).$($a[2])" -eq "$($b[0]).$($b[1]).$($b[2])")
+}
+
+function Probar-Requisitos {
+    $r = @()
+
+    # --- 1. scrcpy
+    $scrcpy = Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue
+    if ($scrcpy) {
+        $r += Nuevo-Chequeo 'scrcpy instalado' 'ok' $scrcpy.Source
+    } else {
+        $r += Nuevo-Chequeo 'scrcpy instalado' 'falla' 'No se encontró scrcpy en el equipo.' `
+            'Cierra Mirador y ábrelo otra vez: lo instala solo la primera vez.'
+    }
+
+    # --- 2. adb
+    $version = (Invocar-Adb @('version')).Trim()
+    if ($version) {
+        $primera = @($version -split "`r?`n")[0]
+        $r += Nuevo-Chequeo 'adb responde' 'ok' $primera
+    } else {
+        $r += Nuevo-Chequeo 'adb responde' 'falla' 'adb no contestó.' `
+            'Viene junto con scrcpy. Cierra Mirador y ábrelo otra vez.'
+    }
+
+    # --- 3. telefonos que ve adb
+    $dispositivos   = @(Obtener-Dispositivos)
+    $listos         = @($dispositivos | Where-Object { $_.Estado -eq 'device' })
+    $sinAutorizar   = @($dispositivos | Where-Object { $_.Estado -eq 'unauthorized' })
+    $desconectados  = @($dispositivos | Where-Object { $_.Estado -eq 'offline' })
+
+    if ($listos.Count -gt 0) {
+        $nombres = ($listos | ForEach-Object { if ($_.Modelo) { $_.Modelo } else { $_.Id } }) -join ', '
+        $r += Nuevo-Chequeo 'Teléfonos listos' 'ok' "$($listos.Count): $nombres"
+    } elseif ($dispositivos.Count -eq 0) {
+        $r += Nuevo-Chequeo 'Teléfonos listos' 'falla' 'adb no ve ningún teléfono.' `
+            'Conecta el cable, o usa «Preparar mi teléfono» si es la primera vez con este celular.'
+    } else {
+        $r += Nuevo-Chequeo 'Teléfonos listos' 'falla' "Ninguno listo, de $($dispositivos.Count) que adb alcanza a ver." `
+            'Mira los dos puntos siguientes.'
+    }
+
+    if ($sinAutorizar.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Autorización del teléfono' 'falla' `
+            "$($sinAutorizar.Count) conectado(s) pero sin autorizar." `
+            'Mira la pantalla del teléfono: hay un aviso pidiendo permiso. Toca «Permitir» y marca «Siempre».'
+    }
+
+    if ($desconectados.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Conexión perdida' 'aviso' `
+            "$($desconectados.Count) aparece(n) como «offline»." `
+            'Desconecta el cable y vuelve a conectarlo. Si es por Wi-Fi, el teléfono pudo reiniciarse.'
+    }
+
+    # --- 4. la red del PC
+    $ips = @(Obtener-IPsLocales)
+    if ($ips.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Red del computador' 'ok' ($ips -join ', ')
+    } else {
+        $r += Nuevo-Chequeo 'Red del computador' 'falla' 'El computador no aparece conectado a ninguna red.' `
+            'Conéctalo al Wi-Fi. Sin red solo vas a poder usar el cable.'
+    }
+
+    # --- 5. los telefonos recordados
+    #
+    # Aca esta el diagnostico que nadie hace a mano: comparar la red del PC con
+    # la del telefono guardado. Un PC con VPN encendida, o en una red de
+    # invitados, ve todo "normal" y no conecta nunca.
+    foreach ($c in @(Leer-Estado)) {
+        if ([string]::IsNullOrWhiteSpace($c.direccion)) { continue }
+        $etiqueta = if ($c.nombre) { $c.nombre } else { $c.serial }
+
+        if ($c.direccion -match '^(\d{1,3}(?:\.\d{1,3}){3}):(\d+)$') {
+            $ip     = $Matches[1]
+            $puerto = [int] $Matches[2]
+
+            if ($ips.Count -gt 0 -and -not @($ips | Where-Object { Misma-Red $_ $ip }).Count) {
+                $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'falla' `
+                    "El teléfono quedó en $ip y el computador está en $($ips -join ', ')." `
+                    'Están en redes distintas. Conecta los dos al mismo Wi-Fi, y si tienes una VPN encendida en el computador, apágala.'
+            } elseif (Responde-Puerto $ip $puerto) {
+                $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'ok' "Responde en $($c.direccion)."
+            } else {
+                $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'aviso' `
+                    "No responde en $($c.direccion)." `
+                    'Seguramente le cambió la IP o se apagó la depuración. Mirador lo busca solo por su nombre de red; si no aparece, usa «Emparejar Wi-Fi».'
+            }
+        } else {
+            $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'ok' `
+                'Guardado por nombre de red, que no cambia aunque cambie la IP.'
+        }
+    }
+
+    # --- 6. la conexion sin cable
+    #
+    # "adb mdns services" lista lo que se anuncia EN ESE MOMENTO, y un telefono
+    # ya conectado puede no figurar ahi: medido con dos telefonos trabajando por
+    # Wi-Fi, la lista salio vacia. Por eso se mira primero si ya hay alguno
+    # conectado sin cable. Decirle "enciende la depuracion inalambrica" a quien
+    # la tiene encendida es peor que no decir nada.
+    $inalambricos = @($dispositivos | Where-Object { $_.EsWifi -and $_.Estado -eq 'device' })
+    $mdns         = (Invocar-Adb @('mdns', 'services'))
+    $anuncios     = @($mdns -split "`r?`n" | Where-Object { $_ -match '_adb' })
+
+    if ($inalambricos.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Conexión sin cable' 'ok' "$($inalambricos.Count) teléfono(s) trabajando por Wi-Fi ahora mismo."
+    } elseif ($anuncios.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Conexión sin cable' 'ok' "$($anuncios.Count) teléfono(s) anunciándose en la red, listos para conectar."
+    } else {
+        $r += Nuevo-Chequeo 'Conexión sin cable' 'aviso' `
+            'Ningún teléfono se está anunciando en la red.' `
+            'Es normal si lo vas a usar por cable. Para usarlo sin cable, enciende «Depuración inalámbrica» en el teléfono.'
+    }
+
+    return $r
+}
+
+# ---------------------------------------------------------------------------
+# Dialogo: el resultado de la revision
+# ---------------------------------------------------------------------------
+
+function Formatear-Diagnostico {
+    param([array] $Chequeos)
+
+    $lineas = @()
+    foreach ($c in $Chequeos) {
+        $marca = switch ($c.Estado) { 'ok' { '[ok]' } 'aviso' { '[ !]' } default { '[XX]' } }
+        $lineas += "$marca  $($c.Titulo)"
+        if ($c.Detalle)    { $lineas += "      $($c.Detalle)" }
+        if ($c.Sugerencia) { $lineas += "      -> $($c.Sugerencia)" }
+        $lineas += ''
+    }
+    return ($lineas -join "`r`n")
+}
+
+function Mostrar-Diagnostico {
+    $f = Nueva-Ventana 'Revisar mi equipo' 580 540
+
+    $y = Nuevo-Encabezado $f 'Revisar mi equipo' 'Qué está listo y qué falta para conectar'
+
+    $lblResumen = Nueva-Etiqueta 'Revisando…' 20 $y 524 20 -Negrita
+    $f.Controls.Add($lblResumen)
+
+    $caja = New-Object System.Windows.Forms.TextBox
+    $caja.Location   = New-Object System.Drawing.Point(20, ($y + 28))
+    $caja.Size       = New-Object System.Drawing.Size(524, 330)
+    $caja.Multiline  = $true
+    $caja.ReadOnly   = $true
+    $caja.ScrollBars = 'Vertical'
+    $caja.BackColor  = [System.Drawing.Color]::White
+    $caja.Font       = New-Object System.Drawing.Font('Consolas', 9)
+    $f.Controls.Add($caja)
+
+    # La revision se hace con la ventana YA visible: algunos chequeos tocan la
+    # red y tardan casi un segundo, y arrancar con la ventana en blanco parece
+    # que se colgo.
+    $revisar = {
+        $lblResumen.Text = 'Revisando…'
+        $caja.Text       = ''
+        $f.Refresh()
+
+        $chequeos = @(Probar-Requisitos)
+        $fallas   = @($chequeos | Where-Object { $_.Estado -eq 'falla' }).Count
+        $avisos   = @($chequeos | Where-Object { $_.Estado -eq 'aviso' }).Count
+
+        $caja.Text = Formatear-Diagnostico $chequeos
+        if ($fallas -gt 0) {
+            $lblResumen.Text = "Hay $fallas cosa(s) que impiden conectar. Empieza por la primera marcada [XX]."
+        } elseif ($avisos -gt 0) {
+            $lblResumen.Text = "Todo lo esencial está bien. Hay $avisos aviso(s) sin importancia."
+        } else {
+            $lblResumen.Text = 'Todo en orden.'
+        }
+        Escribir-Log "Diagnostico: $fallas fallas, $avisos avisos"
+    }
+
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Abrir el registro'; Accion = {
+            if (Test-Path $script:ArchivoLog) { Start-Process notepad.exe $script:ArchivoLog }
+            else { Mostrar-Mensaje 'Todavía no hay registro que abrir.' 'Revisar mi equipo' }
+        } },
+        @{ Texto = 'Revisar otra vez'; Accion = $revisar },
+        @{ Texto = 'Cerrar';           Accion = { $f.Close() } }
+    ) 448 150
+    $f.CancelButton = $botones[2]
+    $f.Add_Shown({ $f.Activate(); & $revisar })
+    $f.ShowDialog() | Out-Null
+}
+
+# ---------------------------------------------------------------------------
 # Dialogo: no hay dispositivos
 # ---------------------------------------------------------------------------
 
 function Mostrar-SinDispositivos {
     param([array] $Detectados)
+    $f = Nueva-Ventana 'Mirador' 556 476
 
-    $f = Nueva-Ventana 'Mirador' 470 340
-
-    $f.Controls.Add((Nueva-Etiqueta 'No se encontró ningún celular listo' 20 18 420 -Negrita))
+    $y = Nuevo-Encabezado $f 'No se encontró ningún celular' 'Elige cómo quieres continuar'
 
     $sinAutorizar = @($Detectados | Where-Object { $_.Estado -eq 'unauthorized' })
     if ($sinAutorizar.Count -gt 0) {
         $texto = "El celular está conectado pero falta autorizarlo.`n`nMira la pantalla del teléfono y toca «Permitir» en el aviso de depuración USB, luego presiona Reintentar."
     } else {
-        $texto = "Opciones:`n`n• Si el celular tiene cable, conéctalo y presiona Reintentar.`n• Si solo funciona por Wi-Fi, enciende la Depuración inalámbrica en el teléfono y usa Emparejar.`n• Buscar en la red rastrea el puerto 5555 en toda la Wi-Fi por si cambió la IP."
+        $texto = "• ¿Primera vez con este celular? Empieza por Preparar mi teléfono: hay que activar la depuración una sola vez.`n• Si el celular tiene cable, conéctalo y presiona Reintentar.`n• Si solo funciona por Wi-Fi, enciende la Depuración inalámbrica en el teléfono y usa Emparejar.`n• Buscar en la red rastrea el puerto 5555 en toda la Wi-Fi por si cambió la IP."
     }
 
-    $lbl = Nueva-Etiqueta $texto 20 46 420 130
+    $lbl = Nueva-Etiqueta $texto 20 $y 500 116
     $f.Controls.Add($lbl)
-
-    $lblEstado = Nueva-Etiqueta '' 20 182 420 18
-    $f.Controls.Add($lblEstado)
 
     $accion = [pscustomobject]@{ Valor = 'cancelar' }
 
-    $btnReintentar = Nuevo-Boton 'Reintentar' 20 250 110
+    # La accion principal va sola y a todo el ancho: quien no encuentra su
+    # telefono la primera vez casi siempre es porque no lo ha preparado, y las
+    # otras cuatro opciones dan ese paso por hecho.
+    $btnPreparar = Nuevo-Boton 'Preparar mi teléfono (primera vez)' 20 206 500 40
+    $btnPreparar.Add_Click({ $accion.Valor = 'preparar'; $f.Close() })
+    $f.Controls.Add($btnPreparar)
+
+    $lblEstado = Nueva-Etiqueta '' 20 254 500 18
+    $f.Controls.Add($lblEstado)
+
+    # Las cuatro secundarias, todas del mismo ancho y en reja.
+    $btnReintentar = Nuevo-Boton 'Reintentar' 20 280 240 34
     $btnReintentar.Add_Click({ $accion.Valor = 'reintentar'; $f.Close() })
     $f.Controls.Add($btnReintentar)
 
-    $btnEmparejar = Nuevo-Boton 'Emparejar Wi-Fi' 140 250 130
+    $btnEmparejar = Nuevo-Boton 'Emparejar Wi-Fi' 280 280 240 34
     $btnEmparejar.Add_Click({ $accion.Valor = 'emparejar'; $f.Close() })
     $f.Controls.Add($btnEmparejar)
 
-    $btnBuscar = Nuevo-Boton 'Buscar en la red' 20 212 130 26
+    $btnBuscar = Nuevo-Boton 'Buscar en la red' 20 322 240 34
     $btnBuscar.Add_Click({
         $lblEstado.Text = 'Rastreando la red…'
         $f.Refresh()
@@ -715,10 +1357,14 @@ function Mostrar-SinDispositivos {
     })
     $f.Controls.Add($btnBuscar)
 
-    $btnCancelar = Nuevo-Boton 'Cancelar' 320 250 110
-    $btnCancelar.Add_Click({ $accion.Valor = 'cancelar'; $f.Close() })
-    $f.Controls.Add($btnCancelar)
+    $btnRevisar = Nuevo-Boton 'Revisar mi equipo' 280 322 240 34
+    $btnRevisar.Add_Click({ Mostrar-Diagnostico })
+    $f.Controls.Add($btnRevisar)
 
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Cancelar'; Accion = { $accion.Valor = 'cancelar'; $f.Close() } }
+    ) 382
+    $f.CancelButton = $botones[0]
     $f.Add_Shown({ $f.Activate() })
     $f.ShowDialog() | Out-Null
 
@@ -732,13 +1378,14 @@ function Mostrar-SinDispositivos {
 function Mostrar-Selector {
     param([array] $Dispositivos)
 
-    $f = Nueva-Ventana 'Elige el celular' 430 345
+    $f = Nueva-Ventana 'Elige el celular' 456 384
 
-    $f.Controls.Add((Nueva-Etiqueta 'Hay varios celulares disponibles' 20 18 380 -Negrita))
+    $y = Nuevo-Encabezado $f 'Elige el celular' 'Hay varios disponibles ahora mismo'
 
     $lista = New-Object System.Windows.Forms.ListBox
-    $lista.Location = New-Object System.Drawing.Point(20, 48)
-    $lista.Size     = New-Object System.Drawing.Size(380, 195)
+    $lista.Location = New-Object System.Drawing.Point(20, $y)
+    $lista.Size     = New-Object System.Drawing.Size(400, 180)
+    $lista.BorderStyle = 'FixedSingle'
     $lista.Font     = New-Object System.Drawing.Font('Segoe UI', 10)
 
     foreach ($d in $Dispositivos) {
@@ -746,8 +1393,17 @@ function Mostrar-Selector {
         if (Obtener-VentanaDe $titulo) { $marca = '  ●  ya abierto' } else { $marca = '' }
         $lista.Items.Add(('{0}   ({1}){2}' -f $d.Nombre, $d.Enlace, $marca)) | Out-Null
     }
+    # La lista se ajusta a cuantos telefonos haya: con dos, una caja de 180
+    # px queda medio vacia; con ocho, hace falta toda. Con ella se mueven los
+    # botones y el alto de la ventana.
+    $altoLista = [Math]::Min(180, [Math]::Max(58, ($lista.Items.Count * 19) + 12))
+    $lista.Size = New-Object System.Drawing.Size(400, $altoLista)
+
     $lista.SelectedIndex = 0
     $f.Controls.Add($lista)
+
+    $yBotones = $y + $altoLista + 26
+    $f.ClientSize = New-Object System.Drawing.Size(440, ($yBotones + 32 + 20))
 
     $eleccion = [pscustomobject]@{ Indice = -1 }
 
@@ -760,15 +1416,12 @@ function Mostrar-Selector {
 
     $lista.Add_DoubleClick($conectar)
 
-    $btnConectar = Nuevo-Boton 'Conectar' 180 258 110
-    $btnConectar.Add_Click($conectar)
-    $f.Controls.Add($btnConectar)
-
-    $btnCancelar = Nuevo-Boton 'Cancelar' 300 258 110
-    $btnCancelar.Add_Click({ $f.Close() })
-    $f.Controls.Add($btnCancelar)
-
-    $f.AcceptButton = $btnConectar
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Cancelar'; Accion = { $f.Close() } },
+        @{ Texto = 'Conectar'; Accion = $conectar }
+    ) $yBotones 140
+    $f.CancelButton = $botones[0]
+    $f.AcceptButton = $botones[1]
     $f.Add_Shown({ $f.Activate(); $lista.Focus() })
     $f.ShowDialog() | Out-Null
 
@@ -869,6 +1522,10 @@ for ($intento = 1; $intento -le 6; $intento++) {
         default {
             $accion = Mostrar-SinDispositivos $crudos
             Escribir-Log "Usuario eligio: $accion"
+            if ($accion -eq 'preparar') {
+                $accion = Mostrar-Preparacion $crudos
+                Escribir-Log "Tras la preparacion: $accion"
+            }
             if ($accion -eq 'cancelar') { exit 0 }
             if ($accion -eq 'emparejar') { Mostrar-Emparejamiento | Out-Null }
             $recuperado = $true
@@ -879,8 +1536,13 @@ for ($intento = 1; $intento -le 6; $intento++) {
 }
 
 if ($listos.Count -eq 0) {
-    Mostrar-Mensaje "No se pudo conectar con ningún celular.`n`nEl detalle quedó en:`n$($script:ArchivoLog)" 'Mirador' 'Error'
+    # Mandar a leer un .log era no decir nada. Se ofrece la revision, que
+    # responde lo mismo pero en espanol y con la accion al lado.
+    $respuesta = [System.Windows.Forms.MessageBox]::Show(
+        "No se pudo conectar con ningún celular.`n`n¿Quieres que revise tu equipo y te diga qué falta?",
+        'Mirador', 'YesNo', 'Error')
     Escribir-Log 'Sin dispositivos tras agotar la cascada'
+    if ($respuesta -eq 'Yes') { Mostrar-Diagnostico }
     exit 1
 }
 

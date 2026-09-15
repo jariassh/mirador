@@ -21,6 +21,19 @@ Está escrito para quien usa Mirador, no para quien lee el código.
   elegida**.
 - Botón **«No veo esa opción»** en todas las marcas, que muestra la ruta que
   sirve en casi cualquier Android y recuerda que Ajustes tiene buscador.
+- **«Revisar mi equipo».** Un botón que revisa todo lo que hace falta para
+  conectar y te dice, en español, qué está bien y qué falta tocar: si scrcpy
+  está instalado, si tu celular autorizó la depuración, en qué red está cada
+  uno y si el teléfono que usabas sigue respondiendo.
+- Detecta el caso más difícil de adivinar solo: **que el celular y el
+  computador quedaron en redes distintas** —o que tienes una VPN encendida—,
+  que se ve como si «simplemente no conectara».
+
+### Cambiado
+
+- Cuando no se logra conectar, Mirador ya no te manda a abrir un archivo de
+  registro con el Bloc de notas: **te ofrece revisar el equipo** y te responde
+  en pantalla.
 
 ## [1.0.5] — 2026-09-15
 

@@ -173,12 +173,53 @@ verificado, y el comentario del código dice de dónde salió cada dato.
   moto g(60)s sugirió «Motorola». El teléfono quedó como estaba: pantalla
   apagada, en el inicio y sin archivos temporales.
 
+## `M-3` — diagnóstico en un clic, hecho
+
+**Qué se agregó.** El botón **«Revisar mi equipo»**, al lado de «Buscar en la
+red», y siete chequeos que responden en español con la acción al lado: scrcpy
+instalado, adb respondiendo, teléfonos listos, autorización pendiente, conexión
+perdida, red del computador, teléfonos recordados y conexión sin cable.
+
+Además, el callejón final cambió: cuando se agota la cascada, Mirador ya **no
+manda a abrir el `.log` con el Bloc de notas** —que para su público equivale a
+no decir nada— sino que ofrece hacer la revisión.
+
+**El chequeo que justifica la función:** comparar la red del PC con la del
+teléfono guardado. Un computador con VPN encendida, o en una red de invitados,
+se ve «normal» y no conecta nunca; nadie diagnostica eso a mano.
+
+### Dos cosas que la prueba con teléfonos reales destapó
+
+1. **El aviso de mDNS mentía.** `adb mdns services` lista lo que se anuncia _en
+   ese momento_, y con los dos teléfonos trabajando por Wi-Fi la lista salió
+   **vacía**. El chequeo concluía «ningún teléfono se está anunciando → enciende
+   la Depuración inalámbrica», dicho a alguien que ya la tenía encendida.
+   Ahora mira primero si hay teléfonos conectados sin cable, y el mDNS es solo
+   el segundo camino.
+2. **Los adaptadores virtuales se colaban como red propia.** Aparecía
+   `172.23.176.1` —el conmutador de Hyper-V/WSL— junto a la IP real. Se filtran
+   vEthernet, WSL, Hyper-V, VirtualBox y VMware. ⚠️ **Una VPN NO se filtra, a
+   propósito:** es justo la causa que el chequeo existe para descubrir.
+
+### Cómo se verificó
+
+- **Lógica pura:** `Misma-Red` (misma /24, distinta /24, y basura sin reventar)
+  y `Responde-Puerto` (puerto cerrado, servidor adb vivo en 5037, e IP muerta
+  que devuelve en medio segundo sin colgar la ventana).
+- **Caso de fallo real, sin tocar los teléfonos:** se respaldó el archivo de
+  estado, se guardó un teléfono falso en `10.77.88.99` —otra red— y se comprobó
+  que el chequeo lo marca como `falla` y que la sugerencia explica que están en
+  redes distintas. El archivo quedó restaurado.
+- **Caso feliz:** los 7 chequeos en verde en 1,2 s con los dos teléfonos.
+- **Visual:** capturado el diálogo, que resume «Todo en orden» y lista los siete.
+
 ## Estado al cerrar
 
 - `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.
 - `M-5` cerrado — estudio de nombres hecho y decidido: sigue siendo Mirador.
 - `M-2` cerrado — asistente de preparación, verificado contra dos teléfonos.
-- Abiertos: `M-3` (diagnóstico en un clic) y `M-4` (la vitrina: GIF, instalador
-  Inno Setup, README y volver a público), en ese orden.
+- `M-3` cerrado — diagnóstico en un clic, con el caso de fallo probado.
+- Abierto: `M-4` (la vitrina: GIF, instalador Inno Setup, README y volver a
+  público).
 - El `CLAUDE.md` del workspace decía **(PÚBLICO)**; quedó corregido a privado
   mientras dure el estudio. **Al ejecutar `M-4` hay que volver a cambiarlo.**

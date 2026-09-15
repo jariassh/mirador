@@ -897,6 +897,279 @@ function Mostrar-Preparacion {
 }
 
 # ---------------------------------------------------------------------------
+# Diagnostico: revisar el equipo y decir que falta
+# ---------------------------------------------------------------------------
+
+<#
+    El registro en mirador.log sirve para quien sabe leerlo. Para el resto no
+    existe: decirle "abre el .log con el Bloc de notas" equivale a no decir
+    nada.
+
+    Esta seccion recorre las mismas condiciones que el log deja escritas, pero
+    las responde en espanol y con la accion concreta al lado. Cada chequeo
+    devuelve un objeto, no texto, para que la ventana decida como pintarlo y
+    para poder contar cuantos fallaron.
+#>
+
+function Nuevo-Chequeo {
+    param(
+        [string] $Titulo,
+        [ValidateSet('ok', 'aviso', 'falla')] [string] $Estado,
+        [string] $Detalle = '',
+        [string] $Sugerencia = ''
+    )
+    return [pscustomobject]@{
+        Titulo     = $Titulo
+        Estado     = $Estado
+        Detalle    = $Detalle
+        Sugerencia = $Sugerencia
+    }
+}
+
+<#
+    Responde si un puerto TCP acepta conexion, sin colgar la ventana.
+
+    Test-NetConnection haria lo mismo, pero su tiempo de espera no se puede
+    bajar y tarda varios segundos por direccion muerta, que es justo el caso
+    frecuente aqui: el telefono que ya no esta en la red.
+#>
+function Responde-Puerto {
+    param([string] $Direccion, [int] $Puerto, [int] $Milisegundos = 800)
+
+    $cliente = New-Object System.Net.Sockets.TcpClient
+    try {
+        $intento = $cliente.BeginConnect($Direccion, $Puerto, $null, $null)
+        if (-not $intento.AsyncWaitHandle.WaitOne($Milisegundos, $false)) { return $false }
+        $cliente.EndConnect($intento)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $cliente.Close()
+    }
+}
+
+function Obtener-IPsLocales {
+    try {
+        $todas = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop |
+            Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.PrefixOrigin -ne 'WellKnown' })
+
+        # Los adaptadores virtuales -WSL, Hyper-V, VirtualBox- aparecen como
+        # una red mas y confunden: el usuario ve una IP que no es la suya.
+        # Una VPN, en cambio, NO se filtra a proposito: es justo la causa que
+        # este chequeo existe para descubrir.
+        $reales = @($todas | Where-Object {
+            $_.InterfaceAlias -notmatch 'vEthernet|WSL|Hyper-V|VirtualBox|VMware|Loopback'
+        })
+        if ($reales.Count -eq 0) { $reales = $todas }
+
+        return @($reales | Select-Object -ExpandProperty IPAddress)
+    } catch {
+        Escribir-Log "No se pudieron leer las IPs locales: $($_.Exception.Message)"
+        return @()
+    }
+}
+
+function Misma-Red {
+    param([string] $Una, [string] $Otra)
+    $a = $Una  -split '\.'
+    $b = $Otra -split '\.'
+    if ($a.Count -ne 4 -or $b.Count -ne 4) { return $false }
+    return ("$($a[0]).$($a[1]).$($a[2])" -eq "$($b[0]).$($b[1]).$($b[2])")
+}
+
+function Probar-Requisitos {
+    $r = @()
+
+    # --- 1. scrcpy
+    $scrcpy = Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue
+    if ($scrcpy) {
+        $r += Nuevo-Chequeo 'scrcpy instalado' 'ok' $scrcpy.Source
+    } else {
+        $r += Nuevo-Chequeo 'scrcpy instalado' 'falla' 'No se encontró scrcpy en el equipo.' `
+            'Cierra Mirador y ábrelo otra vez: lo instala solo la primera vez.'
+    }
+
+    # --- 2. adb
+    $version = (Invocar-Adb @('version')).Trim()
+    if ($version) {
+        $primera = @($version -split "`r?`n")[0]
+        $r += Nuevo-Chequeo 'adb responde' 'ok' $primera
+    } else {
+        $r += Nuevo-Chequeo 'adb responde' 'falla' 'adb no contestó.' `
+            'Viene junto con scrcpy. Cierra Mirador y ábrelo otra vez.'
+    }
+
+    # --- 3. telefonos que ve adb
+    $dispositivos   = @(Obtener-Dispositivos)
+    $listos         = @($dispositivos | Where-Object { $_.Estado -eq 'device' })
+    $sinAutorizar   = @($dispositivos | Where-Object { $_.Estado -eq 'unauthorized' })
+    $desconectados  = @($dispositivos | Where-Object { $_.Estado -eq 'offline' })
+
+    if ($listos.Count -gt 0) {
+        $nombres = ($listos | ForEach-Object { if ($_.Modelo) { $_.Modelo } else { $_.Id } }) -join ', '
+        $r += Nuevo-Chequeo 'Teléfonos listos' 'ok' "$($listos.Count): $nombres"
+    } elseif ($dispositivos.Count -eq 0) {
+        $r += Nuevo-Chequeo 'Teléfonos listos' 'falla' 'adb no ve ningún teléfono.' `
+            'Conecta el cable, o usa «Preparar mi teléfono» si es la primera vez con este celular.'
+    } else {
+        $r += Nuevo-Chequeo 'Teléfonos listos' 'falla' "Ninguno listo, de $($dispositivos.Count) que adb alcanza a ver." `
+            'Mira los dos puntos siguientes.'
+    }
+
+    if ($sinAutorizar.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Autorización del teléfono' 'falla' `
+            "$($sinAutorizar.Count) conectado(s) pero sin autorizar." `
+            'Mira la pantalla del teléfono: hay un aviso pidiendo permiso. Toca «Permitir» y marca «Siempre».'
+    }
+
+    if ($desconectados.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Conexión perdida' 'aviso' `
+            "$($desconectados.Count) aparece(n) como «offline»." `
+            'Desconecta el cable y vuelve a conectarlo. Si es por Wi-Fi, el teléfono pudo reiniciarse.'
+    }
+
+    # --- 4. la red del PC
+    $ips = @(Obtener-IPsLocales)
+    if ($ips.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Red del computador' 'ok' ($ips -join ', ')
+    } else {
+        $r += Nuevo-Chequeo 'Red del computador' 'falla' 'El computador no aparece conectado a ninguna red.' `
+            'Conéctalo al Wi-Fi. Sin red solo vas a poder usar el cable.'
+    }
+
+    # --- 5. los telefonos recordados
+    #
+    # Aca esta el diagnostico que nadie hace a mano: comparar la red del PC con
+    # la del telefono guardado. Un PC con VPN encendida, o en una red de
+    # invitados, ve todo "normal" y no conecta nunca.
+    foreach ($c in @(Leer-Estado)) {
+        if ([string]::IsNullOrWhiteSpace($c.direccion)) { continue }
+        $etiqueta = if ($c.nombre) { $c.nombre } else { $c.serial }
+
+        if ($c.direccion -match '^(\d{1,3}(?:\.\d{1,3}){3}):(\d+)$') {
+            $ip     = $Matches[1]
+            $puerto = [int] $Matches[2]
+
+            if ($ips.Count -gt 0 -and -not @($ips | Where-Object { Misma-Red $_ $ip }).Count) {
+                $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'falla' `
+                    "El teléfono quedó en $ip y el computador está en $($ips -join ', ')." `
+                    'Están en redes distintas. Conecta los dos al mismo Wi-Fi, y si tienes una VPN encendida en el computador, apágala.'
+            } elseif (Responde-Puerto $ip $puerto) {
+                $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'ok' "Responde en $($c.direccion)."
+            } else {
+                $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'aviso' `
+                    "No responde en $($c.direccion)." `
+                    'Seguramente le cambió la IP o se apagó la depuración. Mirador lo busca solo por su nombre de red; si no aparece, usa «Emparejar Wi-Fi».'
+            }
+        } else {
+            $r += Nuevo-Chequeo "Teléfono recordado: $etiqueta" 'ok' `
+                'Guardado por nombre de red, que no cambia aunque cambie la IP.'
+        }
+    }
+
+    # --- 6. la conexion sin cable
+    #
+    # "adb mdns services" lista lo que se anuncia EN ESE MOMENTO, y un telefono
+    # ya conectado puede no figurar ahi: medido con dos telefonos trabajando por
+    # Wi-Fi, la lista salio vacia. Por eso se mira primero si ya hay alguno
+    # conectado sin cable. Decirle "enciende la depuracion inalambrica" a quien
+    # la tiene encendida es peor que no decir nada.
+    $inalambricos = @($dispositivos | Where-Object { $_.EsWifi -and $_.Estado -eq 'device' })
+    $mdns         = (Invocar-Adb @('mdns', 'services'))
+    $anuncios     = @($mdns -split "`r?`n" | Where-Object { $_ -match '_adb' })
+
+    if ($inalambricos.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Conexión sin cable' 'ok' "$($inalambricos.Count) teléfono(s) trabajando por Wi-Fi ahora mismo."
+    } elseif ($anuncios.Count -gt 0) {
+        $r += Nuevo-Chequeo 'Conexión sin cable' 'ok' "$($anuncios.Count) teléfono(s) anunciándose en la red, listos para conectar."
+    } else {
+        $r += Nuevo-Chequeo 'Conexión sin cable' 'aviso' `
+            'Ningún teléfono se está anunciando en la red.' `
+            'Es normal si lo vas a usar por cable. Para usarlo sin cable, enciende «Depuración inalámbrica» en el teléfono.'
+    }
+
+    return $r
+}
+
+# ---------------------------------------------------------------------------
+# Dialogo: el resultado de la revision
+# ---------------------------------------------------------------------------
+
+function Formatear-Diagnostico {
+    param([array] $Chequeos)
+
+    $lineas = @()
+    foreach ($c in $Chequeos) {
+        $marca = switch ($c.Estado) { 'ok' { '[ok]' } 'aviso' { '[ !]' } default { '[XX]' } }
+        $lineas += "$marca  $($c.Titulo)"
+        if ($c.Detalle)    { $lineas += "      $($c.Detalle)" }
+        if ($c.Sugerencia) { $lineas += "      -> $($c.Sugerencia)" }
+        $lineas += ''
+    }
+    return ($lineas -join "`r`n")
+}
+
+function Mostrar-Diagnostico {
+    $f = Nueva-Ventana 'Revisar mi equipo' 560 520
+
+    $lblResumen = Nueva-Etiqueta 'Revisando…' 20 16 500 20 -Negrita
+    $f.Controls.Add($lblResumen)
+
+    $caja = New-Object System.Windows.Forms.TextBox
+    $caja.Location   = New-Object System.Drawing.Point(20, 44)
+    $caja.Size       = New-Object System.Drawing.Size(505, 355)
+    $caja.Multiline  = $true
+    $caja.ReadOnly   = $true
+    $caja.ScrollBars = 'Vertical'
+    $caja.BackColor  = [System.Drawing.Color]::White
+    $caja.Font       = New-Object System.Drawing.Font('Consolas', 9)
+    $f.Controls.Add($caja)
+
+    # La revision se hace con la ventana YA visible: algunos chequeos tocan la
+    # red y tardan casi un segundo, y arrancar con la ventana en blanco parece
+    # que se colgo.
+    $revisar = {
+        $lblResumen.Text = 'Revisando…'
+        $caja.Text       = ''
+        $f.Refresh()
+
+        $chequeos = @(Probar-Requisitos)
+        $fallas   = @($chequeos | Where-Object { $_.Estado -eq 'falla' }).Count
+        $avisos   = @($chequeos | Where-Object { $_.Estado -eq 'aviso' }).Count
+
+        $caja.Text = Formatear-Diagnostico $chequeos
+        if ($fallas -gt 0) {
+            $lblResumen.Text = "Hay $fallas cosa(s) que impiden conectar. Empieza por la primera marcada [XX]."
+        } elseif ($avisos -gt 0) {
+            $lblResumen.Text = "Todo lo esencial está bien. Hay $avisos aviso(s) sin importancia."
+        } else {
+            $lblResumen.Text = 'Todo en orden.'
+        }
+        Escribir-Log "Diagnostico: $fallas fallas, $avisos avisos"
+    }
+
+    $btnOtra = Nuevo-Boton 'Revisar otra vez' 20 420 140 32
+    $btnOtra.Add_Click($revisar)
+    $f.Controls.Add($btnOtra)
+
+    $btnLog = Nuevo-Boton 'Abrir el registro' 175 420 140 32
+    $btnLog.Add_Click({
+        if (Test-Path $script:ArchivoLog) { Start-Process notepad.exe $script:ArchivoLog }
+        else { Mostrar-Mensaje 'Todavía no hay registro que abrir.' 'Revisar mi equipo' }
+    })
+    $f.Controls.Add($btnLog)
+
+    $btnCerrar = Nuevo-Boton 'Cerrar' 425 420 100 32
+    $btnCerrar.Add_Click({ $f.Close() })
+    $f.Controls.Add($btnCerrar)
+
+    $f.CancelButton = $btnCerrar
+    $f.Add_Shown({ $f.Activate(); & $revisar })
+    $f.ShowDialog() | Out-Null
+}
+
+# ---------------------------------------------------------------------------
 # Dialogo: no hay dispositivos
 # ---------------------------------------------------------------------------
 
@@ -945,6 +1218,10 @@ function Mostrar-SinDispositivos {
         else { $lblEstado.Text = 'No apareció ningún celular escuchando en el puerto 5555.' }
     })
     $f.Controls.Add($btnBuscar)
+
+    $btnRevisar = Nuevo-Boton 'Revisar mi equipo' 190 262 150 26
+    $btnRevisar.Add_Click({ Mostrar-Diagnostico })
+    $f.Controls.Add($btnRevisar)
 
     $btnCancelar = Nuevo-Boton 'Cancelar' 330 330 110
     $btnCancelar.Add_Click({ $accion.Valor = 'cancelar'; $f.Close() })
@@ -1114,8 +1391,13 @@ for ($intento = 1; $intento -le 6; $intento++) {
 }
 
 if ($listos.Count -eq 0) {
-    Mostrar-Mensaje "No se pudo conectar con ningún celular.`n`nEl detalle quedó en:`n$($script:ArchivoLog)" 'Mirador' 'Error'
+    # Mandar a leer un .log era no decir nada. Se ofrece la revision, que
+    # responde lo mismo pero en espanol y con la accion al lado.
+    $respuesta = [System.Windows.Forms.MessageBox]::Show(
+        "No se pudo conectar con ningún celular.`n`n¿Quieres que revise tu equipo y te diga qué falta?",
+        'Mirador', 'YesNo', 'Error')
     Escribir-Log 'Sin dispositivos tras agotar la cascada'
+    if ($respuesta -eq 'Yes') { Mostrar-Diagnostico }
     exit 1
 }
 

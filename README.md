@@ -33,9 +33,9 @@ y tu celular aparece. Nada más.
 
 <div align="center">
 
-<img src="recursos/capturas/dos-telefonos.jpg" alt="Dos teléfonos abiertos a la vez en Windows, cada uno en su ventana" width="100%">
+<img src="recursos/capturas/demo.gif" alt="Mirador abriendo dos teléfonos, uno tras otro, cada uno en su ventana" width="100%">
 
-<sub>Dos teléfonos abiertos al mismo tiempo, ambos por Wi-Fi. Cada ventana lleva el nombre de su equipo.</sub>
+<sub>Sin cables: elegir el celular y verlo en pantalla. Después, el segundo — cada uno en su ventana, con el nombre de su equipo en el título.</sub>
 
 </div>
 
@@ -47,7 +47,12 @@ y tu celular aparece. Nada más.
 - **Abre varios a la vez**, cada uno en su ventana.
 - **Nunca te deja bloqueado.** Si algo falla te dice qué pasó y te ofrece
   reintentar, en vez de cerrarse sin explicación.
+- **Te guía para preparar el teléfono**, con la ruta exacta del menú de **tu**
+  marca — porque no se llama igual en un Samsung que en un Xiaomi.
+- **Revisa tu equipo y te dice qué falta**, en español, en vez de mandarte a
+  leer un archivo de registro.
 - **Instala scrcpy solo** la primera vez, sin pedir permisos de administrador.
+  (De ahí sale también `adb`, que Windows no trae.)
 - **Todo en ventanas de Windows.** No hay consola que leer.
 
 ## Cómo encuentra tu teléfono
@@ -180,3 +185,15 @@ MIT — ver [LICENSE](LICENSE).
 **Jonathan Arias** · [@jariassh](https://github.com/jariassh) · [jariash.com](https://jariash.com)
 
 ¿Un error o una idea? Abre un [issue](../../issues).
+
+---
+
+<div align="center">
+
+Mirador lo hice para resolverme un problema mío, y quedó lo bastante bien como
+para publicarlo. Si necesitas algo así para tu negocio —una herramienta interna,
+una automatización, un agente— eso es justo a lo que me dedico.
+
+**[Ver a qué me dedico →](https://servicios.jariash.com)**
+
+</div>

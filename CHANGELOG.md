@@ -63,55 +63,16 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 - La instalación manual con `instalar.ps1` sigue funcionando igual, y las dos
   usan la misma carpeta.
 
-## [1.0.5] — 2026-09-15
-
-### Agregado
-
-- Captura en el README con dos teléfonos abiertos al mismo tiempo, cada uno
-  en su ventana y con el nombre de su equipo en el título. Es lo que ningún
-  párrafo explica bien.
-
-## [1.0.4] — 2026-09-15
-
-### Cambiado
-
-- Sale del repositorio el lienzo con el que se diseñó el ícono. Era proceso
-  interno y no le aporta nada a quien descarga la herramienta; los archivos
-  del ícono que sí importan —el `.ico` y los `.svg` editables— siguen en
-  `recursos/`.
-
-## [1.0.3] — 2026-09-15
-
-### Corregido
-
-- Quedaban rastros del nombre provisional del proyecto en sitios que sí se
-  ven: el `<title>` y el `aria-label` de los SVG del ícono —que es lo que
-  anuncia un lector de pantalla— y las etiquetas del lienzo de diseño.
-
-## [1.0.2] — 2026-09-15
-
-### Cambiado
-
-- El lienzo de diseño del ícono pasa a mostrar la pieza final —los tres
-  dibujos, los siete tamaños y la paleta— en vez de las cuatro propuestas
-  iniciales, que quedan en una segunda página como registro de por qué se
-  eligió esa. De paso desaparece del repositorio el nombre provisional con
-  que nació el proyecto.
-
-## [1.0.1] — 2026-09-15
-
-### Corregido
-
-- **Los acentos del instalador salían rotos** («instalaciǬn» en vez de
-  «instalación»). Dos causas apiladas: el archivo estaba guardado sin marca
-  BOM, así que PowerShell 5.1 lo leía como texto ANSI; y la consola de
-  Windows no viene en UTF-8, de modo que los acentos se rompían igual aunque
-  el archivo estuviera bien. Ahora el instalador fija la codificación de
-  salida al arrancar.
-
 ## [1.0.0] — 2026-09-15
 
-Primera versión pública.
+Primera versión.
+
+> Nota: entre las 9:05 y las 9:36 de ese mismo día se etiquetaron 1.0.1 a
+> 1.0.5 — los acentos del instalador, el lienzo con que se diseñó el ícono y
+> la captura del README—, pero eran retoques de esta primera versión hechos
+> antes de que existiera nada que descargar. Se consolidaron acá y sus
+> etiquetas se retiraron: un `tag` marca una versión publicada, no cada
+> merge.
 
 ### Agregado
 

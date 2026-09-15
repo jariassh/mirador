@@ -362,3 +362,13 @@ pie que lleva a `servicios.jariash.com`.
 - **El tablero quedó en cero.** Nada abierto.
 - Anotado como idea sin decidir: publicar en la Microsoft Store, que firma
   gratis y es la única vía a cero avisos de SmartScreen sin pagar certificado.
+- **Publicado:** repositorio público, `v1.1.0` etiquetada y release con
+  `MiradorSetup.exe` (2 MB) y su SHA-256.
+- **La instalación de Jonathan quedó actualizada** a 1.1.0 con el instalador
+  nuevo, conservando sus dos teléfonos recordados, y verificada lanzándola:
+  abre el selector y ya muestra el ícono de Mirador en la barra de título.
+- Nace el `CLAUDE.md` del proyecto (~1.500 tokens), con las cinco reglas
+  críticas —BOM, sin consola, ventanas por ayudantes, rutas verificadas y no
+  empaquetar scrcpy— y el procedimiento de publicar una versión.
+- `vendovox` y `smart-panel` siguen pasando el techo del `CLAUDE.md`, pero ya
+  estaba registrado como `W-10` en el tracker del workspace.

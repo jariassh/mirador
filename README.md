@@ -153,8 +153,7 @@ los quieres quitar: `winget uninstall Genymobile.scrcpy`.
 mirador/
 ├── mirador.ps1        el asistente
 ├── instalar.ps1       instalador y desinstalador
-├── recursos/          el ícono, en .ico y en .svg editable
-└── diseno/            el lienzo donde se diseñó el ícono
+└── recursos/          el ícono, en .ico y en los .svg editables
 ```
 
 ## Créditos

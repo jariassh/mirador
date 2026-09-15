@@ -33,10 +33,21 @@ las dos primeras respuestas:
 
 **Modelo que propone Jonathan:** pago único, **~$5 USD lifetime**.
 
-**Contexto que no hay que perder:** Mirador es el **primer repositorio público**
-del workspace, con licencia MIT (sesión 235). Monetizarlo obliga a decidir qué
-pasa con eso — no es un detalle, es lo primero que va a preguntar cualquiera.
+**Contexto que no hay que perder:** Mirador nació como el **primer repositorio
+público** del workspace, con licencia MIT (sesión 235). Monetizarlo obliga a
+decidir qué pasa con eso — no es un detalle, es lo primero que va a preguntar
+cualquiera.
 
-⛔ **Sin decidir nada todavía.** Esto es una idea a evaluar, no una decisión
-tomada: el tablero registra lo que Jonathan decidió, y acá lo decidido es
-únicamente _estudiarlo_.
+**Lo que Jonathan decidió el 2026-09-15:** poner el repositorio **en privado**
+mientras se estudia, para que nadie clone el código entre tanto. Es reversible
+y no cierra ninguna de las opciones.
+
+**Estado — el estudio ya está hecho:** [`estudio-monetizacion.md`](estudio-monetizacion.md)
+responde las tres preguntas (sí existe competencia y la franja gratuita está
+tomada; sí se puede cobrar, ninguna licencia lo impide; no se puede proteger un
+`.ps1`, `PS2EXE` se descompila con `-extract`). Trae una recomendación y tres
+caminos.
+
+⛔ **Falta la decisión, y el ítem sigue abierto hasta que exista.** El tablero
+registra lo que Jonathan decidió, no lo que se le recomendó: M-1 se cierra
+cuando él elija camino, no cuando se entregó el informe.

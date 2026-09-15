@@ -1,4 +1,4 @@
-<#
+﻿<#
     Mirador — instalador
 
     Copia Mirador a tu carpeta de usuario y crea el acceso directo, con su
@@ -17,6 +17,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# La consola de Windows no viene en UTF-8. Sin estas dos lineas, los acentos
+# de los mensajes de abajo salen rotos en cualquier equipo cuya pagina de
+# codigos no sea la 65001 -- que son casi todos.
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding            = [System.Text.Encoding]::UTF8
+} catch { }
 
 $origen   = Split-Path -Parent $MyInvocation.MyCommand.Path
 $destino  = Join-Path $env:LOCALAPPDATA 'Mirador'
@@ -61,7 +69,7 @@ if ($Desinstalar) {
 
 Escribir ''
 Escribir '  Mirador — tu celular en tu pantalla' 'Cyan'
-Escribir '  ───────────────────────────────────' 'DarkCyan'
+Escribir '  -----------------------------------' 'DarkCyan'
 Escribir ''
 
 # 1. Comprobar que están los archivos que hay que copiar

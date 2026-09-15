@@ -80,6 +80,18 @@ que se cae antes de llegar a Mirador, en las Opciones de desarrollador.
 
 ## Publicar una versión
 
+⛔ **Un `tag` marca una versión PUBLICADA, no cada merge.** Si no hay nada que
+alguien pueda descargar, no lleva etiqueta. El 2026-09-15 se etiquetaron seis
+versiones en la primera media hora —retoques del ícono y del README, sin
+artefacto ninguno— y hubo que retirar cinco: parecía un proyecto con más
+historial del que tenía, que es lo contrario de lo que busca una carta de
+presentación.
+
+⛔ **El número lo decide lo que el usuario percibe, no el tamaño del cambio.**
+MAYOR solo cuando obliga a reaprender o rompe algo; funcionalidad nueva que se
+suma sin quitar nada es MENOR, por mucha que sea. Quemar el 2.0.0 en una
+versión que solo agrega deja sin número el día que haya un cambio de fondo.
+
 1. Cerrar `## [No publicado]` en `CHANGELOG.md` con el número y la fecha.
 2. Subir la versión en `instalador/mirador.iss` (`#define Version`).
 3. Merge de `develop` a `main` + `git tag -a vX.Y.Z`.

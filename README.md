@@ -31,6 +31,14 @@ crípticos es el teléfono que quieres ver.
 **Mirador es el asistente que resuelve todo eso.** Haces doble clic en un ícono
 y tu celular aparece. Nada más.
 
+<div align="center">
+
+<img src="recursos/capturas/dos-telefonos.jpg" alt="Dos teléfonos abiertos a la vez en Windows, cada uno en su ventana" width="100%">
+
+<sub>Dos teléfonos abiertos al mismo tiempo, ambos por Wi-Fi. Cada ventana lleva el nombre de su equipo.</sub>
+
+</div>
+
 ## Qué hace por ti
 
 - **Encuentra el teléfono solo**, aunque le haya cambiado la dirección IP.
@@ -116,9 +124,9 @@ Se hace una vez. De ahí en adelante te reconecta solo.
 
 Si hay más de uno conectado, Mirador te muestra una lista con **marca y
 modelo**, y marca con un punto los que ya tienes abiertos. Puedes tener
-varios abiertos al mismo tiempo: cada ventana lleva el nombre de su teléfono,
-y al volver a abrir Mirador te trae al frente el que elijas en vez de abrir
-una ventana repetida.
+varios abiertos al mismo tiempo —como en la captura de arriba—: cada ventana
+lleva el nombre de su teléfono, y al volver a abrir Mirador te trae al frente
+el que elijas en vez de abrir una ventana repetida.
 
 ## Si algo falla
 
@@ -153,7 +161,7 @@ los quieres quitar: `winget uninstall Genymobile.scrcpy`.
 mirador/
 ├── mirador.ps1        el asistente
 ├── instalar.ps1       instalador y desinstalador
-└── recursos/          el ícono, en .ico y en los .svg editables
+└── recursos/          el ícono (.ico y .svg editables) y las capturas
 ```
 
 ## Créditos

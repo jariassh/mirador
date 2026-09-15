@@ -8,6 +8,20 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 
 ## [No publicado]
 
+### Agregado
+
+- **Asistente para preparar el teléfono.** Cuando Mirador no encuentra ningún
+  celular, ahora aparece el botón «Preparar mi teléfono (primera vez)». Eliges
+  tu marca y te muestra la ruta exacta de **tu** menú para activar las Opciones
+  de desarrollador y la depuración — porque no se llama igual en un Samsung que
+  en un Xiaomi. Están cubiertas Samsung, Xiaomi/Redmi/POCO, Motorola,
+  Huawei/Honor, Oppo/realme, TECNO/Infinix y Google Pixel, más una opción para
+  cualquier otra marca.
+- Si el celular ya aparece conectado, el asistente **viene con tu marca ya
+  elegida**.
+- Botón **«No veo esa opción»** en todas las marcas, que muestra la ruta que
+  sirve en casi cualquier Android y recuerda que Ajustes tiene buscador.
+
 ## [1.0.5] — 2026-09-15
 
 ### Agregado

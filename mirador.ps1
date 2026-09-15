@@ -673,13 +673,237 @@ function Mostrar-Emparejamiento {
 }
 
 # ---------------------------------------------------------------------------
+# Guias de preparacion del telefono, por marca
+# ---------------------------------------------------------------------------
+
+<#
+    Rutas de menu verificadas contra la documentacion de cada fabricante el
+    2026-09-15.
+
+    El nombre del menu CAMBIA por marca, y ese es el punto entero de esta
+    tabla: en Xiaomi los siete toques van sobre "Version de MIUI" y no sobre
+    "Numero de compilacion", y las Opciones de desarrollador viven bajo
+    "Ajustes adicionales", no al final de Ajustes.
+
+    Cada marca es una fila. Agregar una marca nueva es agregar una fila, no
+    tocar el dialogo.
+
+    La fila de TECNO/Infinix NO sale de documentacion: de esa marca solo hay
+    videos. Se verifico sobre un TECNO KL4 con HiOS 14 real, leyendo el menu
+    con adb, y ahi aparecio que "Acerca del telefono" se llama "Mi telefono"
+    y que no existe el submenu "Informacion de software" que si tienen otras
+    marcas. La ruta que estaba escrita de memoria era incorrecta.
+
+    Para el resto de casos esta el boton "No veo esa opcion", que aplica a
+    TODAS las marcas: el menu real cambia entre versiones del mismo
+    fabricante, y quedarse sin salida es peor que una ruta imperfecta.
+#>
+
+$script:RutaGenerica = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nSi no encuentras el menú, abre Ajustes y usa el buscador (la lupa de arriba): escribe «compilación» para el primer paso, o «desarrollador» para el segundo."
+
+$script:GuiasPorMarca = [ordered]@{
+    'Samsung' = @{
+        Activar = "Ajustes  ›  Información del teléfono  ›  Información del software`n`nToca 7 veces seguidas sobre «Número de compilación»."
+        Depurar = "Ajustes  ›  Opciones de desarrollador`n(queda hasta abajo del todo en Ajustes)`n`nEnciende «Depuración USB»."
+    }
+    'Xiaomi / Redmi / POCO' = @{
+        Activar = "Ajustes  ›  Sobre el teléfono`n`nToca 7 veces seguidas sobre «Versión de MIUI» (o «Versión de HyperOS»).`n`nOjo: en Xiaomi NO se toca «Número de compilación» como en el resto."
+        Depurar = "Ajustes  ›  Ajustes adicionales  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Motorola' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nEn los modelos nuevos está en Ajustes › Sistema › Acerca del teléfono."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Huawei / Honor' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nTe va a pedir el PIN o el patrón de desbloqueo antes de activarlo."
+        Depurar = "Ajustes  ›  Sistema y actualizaciones  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Oppo / realme' = @{
+        Activar = "Ajustes  ›  Información del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación» (en algunas versiones está dentro de «Versión»)."
+        Depurar = "ColorOS 12 o más nuevo:`nAjustes  ›  Ajustes del sistema  ›  Opciones de desarrollador`n`nColorOS 11 o anterior:`nAjustes  ›  Ajustes adicionales  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'TECNO / Infinix' = @{
+        Activar = "Ajustes  ›  Mi teléfono`n`nEn HiOS y XOS, «Acerca del teléfono» se llama «Mi teléfono».`n`nBaja hasta abajo y toca 7 veces seguidas sobre «Número de compilación», que está al lado de «Versión de HiOS»."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones de desarrollador`n`nEnciende «Depuración USB»."
+    }
+    'Google Pixel' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación»."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones para desarrolladores`n`nEnciende «Depuración USB»."
+    }
+    'Otra marca' = @{
+        Activar = "Ajustes  ›  Acerca del teléfono`n`nToca 7 veces seguidas sobre «Número de compilación».`n`nCasi todas las marcas lo tienen ahí. Si no aparece, usa el buscador de Ajustes (la lupa) y escribe «compilación»."
+        Depurar = "Ajustes  ›  Sistema  ›  Opciones de desarrollador`n`nSi no aparece, usa el buscador de Ajustes (la lupa) y escribe «desarrollador».`n`nEnciende «Depuración USB»."
+    }
+}
+
+<#
+    Traduce lo que reporta el fabricante a una de las filas de la tabla.
+
+    Solo sirve cuando adb YA ve el telefono: si la depuracion todavia no esta
+    activa no hay aparato que consultar, que es justamente el caso que este
+    asistente viene a resolver. Por eso es una sugerencia y no una deteccion:
+    la marca siempre la termina eligiendo el usuario.
+#>
+function Marca-Sugerida {
+    param([string] $Fabricante)
+
+    if ([string]::IsNullOrWhiteSpace($Fabricante)) { return '' }
+
+    switch -Wildcard ($Fabricante.ToLower()) {
+        '*samsung*'  { return 'Samsung' }
+        '*xiaomi*'   { return 'Xiaomi / Redmi / POCO' }
+        '*redmi*'    { return 'Xiaomi / Redmi / POCO' }
+        '*poco*'     { return 'Xiaomi / Redmi / POCO' }
+        '*motorola*' { return 'Motorola' }
+        '*lenovo*'   { return 'Motorola' }
+        '*huawei*'   { return 'Huawei / Honor' }
+        '*honor*'    { return 'Huawei / Honor' }
+        '*oppo*'     { return 'Oppo / realme' }
+        '*realme*'   { return 'Oppo / realme' }
+        '*oneplus*'  { return 'Oppo / realme' }
+        '*tecno*'    { return 'TECNO / Infinix' }
+        '*infinix*'  { return 'TECNO / Infinix' }
+        '*google*'   { return 'Google Pixel' }
+        default      { return '' }
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Dialogo: elegir la marca del telefono
+# ---------------------------------------------------------------------------
+
+function Mostrar-ElegirMarca {
+    param([string] $Sugerida)
+
+    $f = Nueva-Ventana 'Preparar mi teléfono' 430 360
+
+    $f.Controls.Add((Nueva-Etiqueta '¿Qué marca es tu teléfono?' 20 18 380 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta 'El menú se llama distinto en cada marca, por eso preguntamos.' 20 42 380 34))
+
+    $lista = New-Object System.Windows.Forms.ListBox
+    $lista.Location = New-Object System.Drawing.Point(20, 82)
+    $lista.Size     = New-Object System.Drawing.Size(380, 165)
+    foreach ($m in $script:GuiasPorMarca.Keys) { $lista.Items.Add($m) | Out-Null }
+
+    if ($Sugerida -and $lista.Items.Contains($Sugerida)) {
+        $lista.SelectedItem = $Sugerida
+    } else {
+        $lista.SelectedIndex = 0
+    }
+    $f.Controls.Add($lista)
+
+    $elegido = [pscustomobject]@{ Valor = '' }
+
+    $btnSiguiente = Nuevo-Boton 'Siguiente' 20 270 120
+    $btnSiguiente.Add_Click({ $elegido.Valor = [string] $lista.SelectedItem; $f.Close() })
+    $f.Controls.Add($btnSiguiente)
+
+    # Doble clic sobre la marca hace lo mismo que Siguiente: es lo que la
+    # gente intenta sin pensarlo.
+    $lista.Add_DoubleClick({ $elegido.Valor = [string] $lista.SelectedItem; $f.Close() })
+
+    $btnCancelar = Nuevo-Boton 'Cancelar' 290 270 110
+    $btnCancelar.Add_Click({ $elegido.Valor = ''; $f.Close() })
+    $f.Controls.Add($btnCancelar)
+
+    $f.AcceptButton = $btnSiguiente
+    $f.CancelButton = $btnCancelar
+
+    $f.Add_Shown({ $f.Activate() })
+    $f.ShowDialog() | Out-Null
+
+    return $elegido.Valor
+}
+
+# ---------------------------------------------------------------------------
+# Dialogo: los dos pasos de la guia
+# ---------------------------------------------------------------------------
+
+<#
+    Los dos pasos van en UNA sola pantalla a proposito. Son cortos y se hacen
+    seguidos, con el telefono en la mano: partirlos en dos ventanas agrega
+    clics sin agregar claridad.
+#>
+function Mostrar-GuiaMarca {
+    param([string] $Marca)
+
+    $guia = $script:GuiasPorMarca[$Marca]
+    $f    = Nueva-Ventana "Preparar mi teléfono — $Marca" 520 495
+
+    $f.Controls.Add((Nueva-Etiqueta "Paso 1 · Activa las Opciones de desarrollador" 20 16 460 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta $guia.Activar 20 40 460 112))
+
+    $f.Controls.Add((Nueva-Etiqueta "Paso 2 · Enciende la depuración" 20 162 460 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta $guia.Depurar 20 186 460 115))
+
+    $f.Controls.Add((Nueva-Etiqueta "Para usarlo sin cable, enciende además «Depuración inalámbrica» en esa misma pantalla. Necesita Android 11 o superior." 20 315 460 46))
+
+    $accion = [pscustomobject]@{ Valor = 'cancelar' }
+
+    $btnListo = Nuevo-Boton 'Listo, busca mi teléfono' 20 392 190 32
+    $btnListo.Add_Click({ $accion.Valor = 'reintentar'; $f.Close() })
+    $f.Controls.Add($btnListo)
+
+    # La salida de emergencia. Aplica a todas las marcas porque el menu real
+    # cambia entre versiones del mismo fabricante, y quedarse sin salida es
+    # peor que una ruta imperfecta.
+    $btnNoVeo = Nuevo-Boton 'No veo esa opción' 225 392 150 32
+    $btnNoVeo.Add_Click({
+        Mostrar-Mensaje "Ruta que sirve en casi todos los Android:`n`n$($script:RutaGenerica)" 'Preparar mi teléfono'
+    })
+    $f.Controls.Add($btnNoVeo)
+
+    $btnAtras = Nuevo-Boton 'Atrás' 390 392 90 32
+    $btnAtras.Add_Click({ $accion.Valor = 'atras'; $f.Close() })
+    $f.Controls.Add($btnAtras)
+
+    $f.AcceptButton = $btnListo
+
+    $f.Add_Shown({ $f.Activate() })
+    $f.ShowDialog() | Out-Null
+
+    return $accion.Valor
+}
+
+# ---------------------------------------------------------------------------
+# Asistente completo de preparacion
+# ---------------------------------------------------------------------------
+
+function Mostrar-Preparacion {
+    param([array] $Detectados)
+
+    $sugerida = ''
+    foreach ($d in @($Detectados)) {
+        if ($d.Estado -eq 'device') {
+            $sugerida = Marca-Sugerida (Obtener-Propiedad $d.Id 'ro.product.manufacturer')
+            if ($sugerida) { break }
+        }
+    }
+    if ($sugerida) { Escribir-Log "Marca sugerida por adb: $sugerida" }
+
+    while ($true) {
+        $marca = Mostrar-ElegirMarca $sugerida
+        if ([string]::IsNullOrWhiteSpace($marca)) {
+            Escribir-Log 'Preparacion cancelada en la eleccion de marca'
+            return 'cancelar'
+        }
+
+        Escribir-Log "Guia de preparacion mostrada: $marca"
+        $r = Mostrar-GuiaMarca $marca
+        if ($r -ne 'atras') { return $r }
+
+        $sugerida = $marca
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Dialogo: no hay dispositivos
 # ---------------------------------------------------------------------------
 
 function Mostrar-SinDispositivos {
     param([array] $Detectados)
 
-    $f = Nueva-Ventana 'Mirador' 470 340
+    $f = Nueva-Ventana 'Mirador' 490 420
 
     $f.Controls.Add((Nueva-Etiqueta 'No se encontró ningún celular listo' 20 18 420 -Negrita))
 
@@ -687,26 +911,33 @@ function Mostrar-SinDispositivos {
     if ($sinAutorizar.Count -gt 0) {
         $texto = "El celular está conectado pero falta autorizarlo.`n`nMira la pantalla del teléfono y toca «Permitir» en el aviso de depuración USB, luego presiona Reintentar."
     } else {
-        $texto = "Opciones:`n`n• Si el celular tiene cable, conéctalo y presiona Reintentar.`n• Si solo funciona por Wi-Fi, enciende la Depuración inalámbrica en el teléfono y usa Emparejar.`n• Buscar en la red rastrea el puerto 5555 en toda la Wi-Fi por si cambió la IP."
+        $texto = "Opciones:`n`n• ¿Primera vez con este celular? Empieza por Preparar mi teléfono: hay que activar la depuración una sola vez.`n• Si el celular tiene cable, conéctalo y presiona Reintentar.`n• Si solo funciona por Wi-Fi, enciende la Depuración inalámbrica en el teléfono y usa Emparejar.`n• Buscar en la red rastrea el puerto 5555 en toda la Wi-Fi por si cambió la IP."
     }
 
-    $lbl = Nueva-Etiqueta $texto 20 46 420 130
+    $lbl = Nueva-Etiqueta $texto 20 46 440 140
     $f.Controls.Add($lbl)
-
-    $lblEstado = Nueva-Etiqueta '' 20 182 420 18
-    $f.Controls.Add($lblEstado)
 
     $accion = [pscustomobject]@{ Valor = 'cancelar' }
 
-    $btnReintentar = Nuevo-Boton 'Reintentar' 20 250 110
+    # Accion principal y separada del resto: quien no encuentra su telefono la
+    # primera vez casi siempre es porque no lo ha preparado, y los otros tres
+    # botones dan ese paso por hecho.
+    $btnPreparar = Nuevo-Boton 'Preparar mi teléfono (primera vez)' 20 192 250 34
+    $btnPreparar.Add_Click({ $accion.Valor = 'preparar'; $f.Close() })
+    $f.Controls.Add($btnPreparar)
+
+    $lblEstado = Nueva-Etiqueta '' 20 236 440 18
+    $f.Controls.Add($lblEstado)
+
+    $btnReintentar = Nuevo-Boton 'Reintentar' 20 330 110
     $btnReintentar.Add_Click({ $accion.Valor = 'reintentar'; $f.Close() })
     $f.Controls.Add($btnReintentar)
 
-    $btnEmparejar = Nuevo-Boton 'Emparejar Wi-Fi' 140 250 130
+    $btnEmparejar = Nuevo-Boton 'Emparejar Wi-Fi' 140 330 130
     $btnEmparejar.Add_Click({ $accion.Valor = 'emparejar'; $f.Close() })
     $f.Controls.Add($btnEmparejar)
 
-    $btnBuscar = Nuevo-Boton 'Buscar en la red' 20 212 130 26
+    $btnBuscar = Nuevo-Boton 'Buscar en la red' 20 262 150 26
     $btnBuscar.Add_Click({
         $lblEstado.Text = 'Rastreando la red…'
         $f.Refresh()
@@ -715,7 +946,7 @@ function Mostrar-SinDispositivos {
     })
     $f.Controls.Add($btnBuscar)
 
-    $btnCancelar = Nuevo-Boton 'Cancelar' 320 250 110
+    $btnCancelar = Nuevo-Boton 'Cancelar' 330 330 110
     $btnCancelar.Add_Click({ $accion.Valor = 'cancelar'; $f.Close() })
     $f.Controls.Add($btnCancelar)
 
@@ -869,6 +1100,10 @@ for ($intento = 1; $intento -le 6; $intento++) {
         default {
             $accion = Mostrar-SinDispositivos $crudos
             Escribir-Log "Usuario eligio: $accion"
+            if ($accion -eq 'preparar') {
+                $accion = Mostrar-Preparacion $crudos
+                Escribir-Log "Tras la preparacion: $accion"
+            }
             if ($accion -eq 'cancelar') { exit 0 }
             if ($accion -eq 'emparejar') { Mostrar-Emparejamiento | Out-Null }
             $recuperado = $true

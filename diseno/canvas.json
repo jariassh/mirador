@@ -1,0 +1,30 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1240,
+      "h": 740,
+      "title": "Cuatro direcciones"
+    },
+    {
+      "file": "Contexto.dc.html",
+      "x": 0,
+      "y": 860,
+      "w": 1240,
+      "h": 660,
+      "title": "En el escritorio"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "nota-decision",
+      "x": 1320,
+      "y": 0,
+      "w": 300,
+      "text": "Elige una letra (A, B, C o D).\n\nCon la elegida hago:\n- versión simplificada para 16 px\n- el .ico de Windows con todos los tamaños\n- el SVG editable para el repo"
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

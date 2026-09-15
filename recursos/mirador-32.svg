@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Ver celular">
+  <title>Ver celular — version para 32 px</title>
+  <!--
+    Variante para tamanos medianos (24 y 32 px).
+    Cambia respecto del maestro: se quita la rejilla del altavoz (a 32 px
+    mide medio pixel y solo ensucia) y engordan los trazos de la senal.
+  -->
+  <defs>
+    <linearGradient id="tinta32" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#242C3A"/>
+      <stop offset="1" stop-color="#11151D"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="52" fill="url(#tinta32)"/>
+
+  <rect x="56" y="46" width="94" height="164" rx="23" fill="#F2F4F8"/>
+
+  <g fill="none" stroke="#E3A857" stroke-width="19" stroke-linecap="round">
+    <path d="M184 102 a42 42 0 0 1 0 52"/>
+    <path d="M212 78 a78 78 0 0 1 0 100"/>
+  </g>
+</svg>

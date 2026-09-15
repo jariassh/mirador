@@ -1,0 +1,487 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+        />
+        <style>
+          body {
+            margin: 0;
+          }
+          a {
+            color: #a8752e;
+          }
+          a:hover {
+            color: #7e561f;
+          }
+        </style>
+      </helmet>
+
+      <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+        <defs>
+          <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#242C3A" />
+            <stop offset="1" stop-color="#11151D" />
+          </linearGradient>
+
+          <symbol id="ic-a" viewBox="0 0 256 256">
+            <rect width="256" height="256" rx="58" fill="url(#ink)" />
+            <rect
+              x="38"
+              y="64"
+              width="180"
+              height="118"
+              rx="20"
+              fill="none"
+              stroke="#F2F4F8"
+              stroke-width="13"
+            />
+            <rect
+              x="104"
+              y="87"
+              width="48"
+              height="72"
+              rx="13"
+              fill="#E3A857"
+            />
+          </symbol>
+
+          <symbol id="ic-b" viewBox="0 0 256 256">
+            <rect width="256" height="256" rx="58" fill="url(#ink)" />
+            <rect
+              x="58"
+              y="50"
+              width="88"
+              height="156"
+              rx="21"
+              fill="#F2F4F8"
+            />
+            <rect x="86" y="62" width="32" height="7" rx="3.5" fill="#11151D" />
+            <path
+              d="M178 104 a40 40 0 0 1 0 48"
+              fill="none"
+              stroke="#E3A857"
+              stroke-width="14"
+              stroke-linecap="round"
+            />
+            <path
+              d="M204 82 a76 76 0 0 1 0 92"
+              fill="none"
+              stroke="#E3A857"
+              stroke-width="14"
+              stroke-linecap="round"
+            />
+          </symbol>
+
+          <symbol id="ic-c" viewBox="0 0 256 256">
+            <rect width="256" height="256" rx="58" fill="url(#ink)" />
+            <rect
+              x="30"
+              y="64"
+              width="158"
+              height="112"
+              rx="18"
+              fill="none"
+              stroke="#F2F4F8"
+              stroke-width="13"
+            />
+            <rect
+              x="150"
+              y="92"
+              width="64"
+              height="110"
+              rx="15"
+              fill="#E3A857"
+              stroke="#161B25"
+              stroke-width="11"
+            />
+          </symbol>
+
+          <symbol id="ic-d" viewBox="0 0 256 256">
+            <rect width="256" height="256" rx="58" fill="url(#ink)" />
+            <rect
+              x="76"
+              y="46"
+              width="104"
+              height="164"
+              rx="25"
+              fill="#F2F4F8"
+            />
+            <rect
+              x="112"
+              y="58"
+              width="32"
+              height="7"
+              rx="3.5"
+              fill="#11151D"
+            />
+            <rect x="94" y="100" width="68" height="48" rx="9" fill="#E3A857" />
+          </symbol>
+        </defs>
+      </svg>
+
+      <div
+        style="
+          width: 1240px;
+          height: 740px;
+          box-sizing: border-box;
+          background: #f7f6f3;
+          font-family:
+            &quot;IBM Plex Sans&quot;, &quot;Segoe UI&quot;, sans-serif;
+          color: #1a1e26;
+          padding: 46px 48px;
+          display: flex;
+          flex-direction: column;
+          gap: 34px;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 32px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div
+              style="
+                font-size: 12px;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: #8a8578;
+              "
+            >
+              Identidad · propuesta
+            </div>
+            <div
+              style="
+                font-family: &quot;Instrument Serif&quot;, Georgia, serif;
+                font-size: 52px;
+                line-height: 1;
+              "
+            >
+              Ver celular
+            </div>
+          </div>
+          <div
+            style="
+              max-width: 460px;
+              font-size: 14px;
+              line-height: 1.6;
+              color: #5b5749;
+              text-wrap: pretty;
+            "
+          >
+            Cuatro direcciones para el ícono. La fila de abajo es la prueba
+            real: el tamaño de 16 px es el que se ve en la barra de tareas, y
+            ahí se cae todo lo que sobra.
+          </div>
+        </div>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 28px;
+            flex-grow: 1;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+              align-items: center;
+              padding: 26px 18px;
+              background: #ffffff;
+              border: 1px solid #e4e1d8;
+              border-radius: 4px;
+            "
+          >
+            <svg width="128" height="128"><use href="#ic-a" /></svg>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: center;
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-family: &quot;Instrument Serif&quot;, Georgia, serif;
+                  font-size: 25px;
+                "
+              >
+                A · Anidado
+              </div>
+              <div style="font-size: 12.5px; line-height: 1.55; color: #6b6659">
+                Tu celular, dentro de tu pantalla. Geometría pura, sin pie de
+                monitor ni adornos.
+              </div>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: flex-end;
+                gap: 14px;
+                padding: 14px 18px;
+                background: #13171f;
+                border-radius: 4px;
+                margin-top: auto;
+              "
+            >
+              <svg width="48" height="48"><use href="#ic-a" /></svg>
+              <svg width="32" height="32"><use href="#ic-a" /></svg>
+              <svg width="16" height="16"><use href="#ic-a" /></svg>
+            </div>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+              align-items: center;
+              padding: 26px 18px;
+              background: #ffffff;
+              border: 1px solid #e4e1d8;
+              border-radius: 4px;
+            "
+          >
+            <svg width="128" height="128"><use href="#ic-b" /></svg>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: center;
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-family: &quot;Instrument Serif&quot;, Georgia, serif;
+                  font-size: 25px;
+                "
+              >
+                B · Señal
+              </div>
+              <div style="font-size: 12.5px; line-height: 1.55; color: #6b6659">
+                El celular emitiendo. Silueta sólida y asimétrica: la que mejor
+                aguanta en chiquito.
+              </div>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: flex-end;
+                gap: 14px;
+                padding: 14px 18px;
+                background: #13171f;
+                border-radius: 4px;
+                margin-top: auto;
+              "
+            >
+              <svg width="48" height="48"><use href="#ic-b" /></svg>
+              <svg width="32" height="32"><use href="#ic-b" /></svg>
+              <svg width="16" height="16"><use href="#ic-b" /></svg>
+            </div>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+              align-items: center;
+              padding: 26px 18px;
+              background: #ffffff;
+              border: 1px solid #e4e1d8;
+              border-radius: 4px;
+            "
+          >
+            <svg width="128" height="128"><use href="#ic-c" /></svg>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: center;
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-family: &quot;Instrument Serif&quot;, Georgia, serif;
+                  font-size: 25px;
+                "
+              >
+                C · Ventana
+              </div>
+              <div style="font-size: 12.5px; line-height: 1.55; color: #6b6659">
+                El celular rompe el marco. Da profundidad, pero es la más
+                ocupada de las cuatro.
+              </div>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: flex-end;
+                gap: 14px;
+                padding: 14px 18px;
+                background: #13171f;
+                border-radius: 4px;
+                margin-top: auto;
+              "
+            >
+              <svg width="48" height="48"><use href="#ic-c" /></svg>
+              <svg width="32" height="32"><use href="#ic-c" /></svg>
+              <svg width="16" height="16"><use href="#ic-c" /></svg>
+            </div>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+              align-items: center;
+              padding: 26px 18px;
+              background: #ffffff;
+              border: 1px solid #e4e1d8;
+              border-radius: 4px;
+            "
+          >
+            <svg width="128" height="128"><use href="#ic-d" /></svg>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: center;
+                text-align: center;
+              "
+            >
+              <div
+                style="
+                  font-family: &quot;Instrument Serif&quot;, Georgia, serif;
+                  font-size: 25px;
+                "
+              >
+                D · Reflejo
+              </div>
+              <div style="font-size: 12.5px; line-height: 1.55; color: #6b6659">
+                La pantalla dentro del celular: el espejo al revés. La inversión
+                exacta de A.
+              </div>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: flex-end;
+                gap: 14px;
+                padding: 14px 18px;
+                background: #13171f;
+                border-radius: 4px;
+                margin-top: auto;
+              "
+            >
+              <svg width="48" height="48"><use href="#ic-d" /></svg>
+              <svg width="32" height="32"><use href="#ic-d" /></svg>
+              <svg width="16" height="16"><use href="#ic-d" /></svg>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            border-top: 1px solid #e4e1d8;
+            padding-top: 22px;
+          "
+        >
+          <div
+            style="
+              font-size: 12px;
+              letter-spacing: 0.14em;
+              text-transform: uppercase;
+              color: #8a8578;
+              width: 118px;
+            "
+          >
+            Paleta
+          </div>
+          <div style="display: flex; gap: 26px; flex-grow: 1">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div
+                style="
+                  width: 26px;
+                  height: 26px;
+                  border-radius: 3px;
+                  background: linear-gradient(#242c3a, #11151d);
+                "
+              ></div>
+              <div style="font-size: 12px">
+                <div style="font-weight: 500">Tinta</div>
+                <div style="color: #8a8578">#242C3A → #11151D</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div
+                style="
+                  width: 26px;
+                  height: 26px;
+                  border-radius: 3px;
+                  background: #e3a857;
+                "
+              ></div>
+              <div style="font-size: 12px">
+                <div style="font-weight: 500">Ámbar</div>
+                <div style="color: #8a8578">#E3A857</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div
+                style="
+                  width: 26px;
+                  height: 26px;
+                  border-radius: 3px;
+                  background: #f2f4f8;
+                  border: 1px solid #e4e1d8;
+                "
+              ></div>
+              <div style="font-size: 12px">
+                <div style="font-weight: 500">Hueso</div>
+                <div style="color: #8a8578">#F2F4F8</div>
+              </div>
+            </div>
+          </div>
+          <div
+            style="
+              font-size: 12.5px;
+              color: #6b6659;
+              max-width: 330px;
+              line-height: 1.55;
+              text-wrap: pretty;
+            "
+          >
+            El ámbar reemplaza al verde de Android a propósito: ese verde es
+            identidad prestada.
+          </div>
+        </div>
+      </div>
+    </x-dc>
+  </body>
+</html>

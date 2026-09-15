@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Mirador">
+  <title>Mirador — version para 16 px</title>
+  <!--
+    Variante para 16 px, el tamano de la barra de tareas.
+
+    Cambia respecto del maestro:
+      - UNA sola onda en vez de dos. A 16 px dos arcos miden menos de un
+        pixel cada uno y se funden en una mancha.
+      - El celular corrido a la izquierda, para que la onda tenga aire.
+        En la primera version quedaba apretada contra el borde y el ambar
+        practicamente desaparecia: el icono se leia como un rectangulo
+        blanco y nada mas.
+      - Trazo mucho mas grueso: a 16 px, 30/256 son ~1,9 px reales.
+      - Menos radio en el fondo, para que no parezca un circulo al reducir.
+  -->
+  <defs>
+    <linearGradient id="tinta16" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#242C3A"/>
+      <stop offset="1" stop-color="#11151D"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="40" fill="url(#tinta16)"/>
+
+  <rect x="44" y="44" width="92" height="168" rx="22" fill="#F2F4F8"/>
+
+  <path d="M176 88 a56 56 0 0 1 0 80"
+        fill="none" stroke="#E3A857" stroke-width="30" stroke-linecap="round"/>
+</svg>

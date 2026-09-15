@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Ver celular">
+  <title>Ver celular</title>
+  <defs>
+    <linearGradient id="tinta" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#242C3A"/>
+      <stop offset="1" stop-color="#11151D"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="58" fill="url(#tinta)"/>
+
+  <!-- El celular -->
+  <rect x="58" y="50" width="88" height="156" rx="21" fill="#F2F4F8"/>
+  <rect x="86" y="62" width="32" height="7" rx="3.5" fill="#11151D"/>
+
+  <!-- La senal saliendo hacia la pantalla -->
+  <g fill="none" stroke="#E3A857" stroke-width="15" stroke-linecap="round">
+    <path d="M178 104 a40 40 0 0 1 0 48"/>
+    <path d="M204 82 a76 76 0 0 1 0 92"/>
+  </g>
+</svg>

@@ -8,6 +8,8 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 
 ## [No publicado]
 
+## [1.1.0] — 2026-09-15
+
 ### Agregado
 
 - **Asistente para preparar el teléfono.** Cuando Mirador no encuentra ningún

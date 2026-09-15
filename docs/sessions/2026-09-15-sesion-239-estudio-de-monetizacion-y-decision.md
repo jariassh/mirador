@@ -349,6 +349,46 @@ pie que lleva a `servicios.jariash.com`.
 **El repositorio volvió a público** (`isPrivate: false`, 0 forks) y la fila de
 `mirador/` en el `CLAUDE.md` del workspace quedó corregida.
 
+## `M-9` — el historial de versiones decía más de lo que era
+
+**De dónde sale.** Jonathan, al ver el repo publicado: _«la versión no debería
+ser la 2.0.0?... adicional veo una cantidad de tags en el repo, disque 7 tags,
+eso pienso que son demasiadas tags para apenas ser una segunda version»_.
+
+**Lo de los tags: tenía razón.** Cinco de los siete no eran releases:
+
+```
+v1.0.0   09:05   primera version
+v1.0.1   09:07   acentos del instalador
+v1.0.2   09:08   el lienzo refleja el icono final
+v1.0.3   09:08   limpieza del nombre provisional
+v1.0.4   09:30   fuera el lienzo de diseno
+v1.0.5   09:36   captura en el README
+v1.1.0   15:50   esta
+```
+
+Treinta y un minutos entre la 1.0.0 y la 1.0.5, dos de ellas sobre un lienzo de
+diseño que después salió del repositorio, y **ninguna con nada que descargar**.
+Se retiraron las cinco —local y remoto— y el CHANGELOG las consolidó dentro de
+la 1.0.0, con una nota que dice que existieron y por qué se fueron, para no
+reescribir la historia en silencio. Quedan dos etiquetas: `v1.0.0` y `v1.1.0`.
+
+**Lo de la 2.0.0: se mantuvo en 1.1.0**, y la razón es la convención propia del
+workspace — el número lo decide **lo que el usuario percibe, no el tamaño del
+cambio**. Nada de lo de hoy rompe ni obliga a reaprender: sigue siendo doble
+clic y el celular aparece; todo lo demás se suma. Además, quemar el 2.0.0 en una
+versión que solo agrega deja sin número el día que haya un cambio de fondo.
+Jonathan lo aceptó.
+
+Las dos reglas quedaron escritas en el `CLAUDE.md` del proyecto para que no se
+repita: un `tag` marca una versión publicada, no cada merge.
+
+⚠️ **Detalle del cierre:** el merge de estas correcciones a `main` fue **sin
+etiqueta nueva**, a propósito. `main` es la rama que ve quien entra al
+repositorio y tenía que mostrar el CHANGELOG corregido, pero no hubo cambio de
+código: `v1.1.0` sigue apuntando al mismo commit `d6ffa0c` que se publicó, y el
+`.exe` del release no se tocó.
+
 ## Estado al cerrar
 
 - `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.

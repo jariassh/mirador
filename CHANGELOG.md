@@ -8,6 +8,17 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 
 ## [No publicado]
 
+## [1.0.1] — 2026-09-15
+
+### Corregido
+
+- **Los acentos del instalador salían rotos** («instalaciǬn» en vez de
+  «instalación»). Dos causas apiladas: el archivo estaba guardado sin marca
+  BOM, así que PowerShell 5.1 lo leía como texto ANSI; y la consola de
+  Windows no viene en UTF-8, de modo que los acentos se rompían igual aunque
+  el archivo estuviera bien. Ahora el instalador fija la codificación de
+  salida al arrancar.
+
 ## [1.0.0] — 2026-09-15
 
 Primera versión pública.

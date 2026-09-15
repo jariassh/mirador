@@ -5,28 +5,14 @@
 
 | Prioridad | Total |
 | :-------- | ----: |
-| 🟠 Alto   |     2 |
-| **TOTAL** | **2** |
+| 🟠 Alto   |     1 |
+| **TOTAL** | **1** |
 
-**Se atienden en este orden:** `M-3` → `M-4`. Aprobado por Jonathan el
-2026-09-15. `M-2` ya está cerrado.
+Queda solo `M-4`. `M-2` y `M-3` ya están cerrados.
 
 ---
 
 ## 🟠 Alto
-
-### `M-3` · Diagnóstico en un clic
-
-**El problema.** Cuando algo falla, hoy Mirador manda al usuario a abrir
-`%LOCALAPPDATA%\Mirador\mirador.log` con el Bloc de notas. Para el público al
-que apunta, eso equivale a no decir nada.
-
-**Qué se construye.** Un botón «Revisar mi equipo» que verifique en orden y
-responda en español qué falta y qué tocar: ¿está `adb`?, ¿el teléfono autorizó
-la depuración?, ¿están el PC y el teléfono en la misma red?, ¿la depuración
-sigue activa?
-
-**Beneficio secundario:** menos issues de soporte en el repo.
 
 ### `M-4` · La vitrina — que se vea en 30 segundos
 

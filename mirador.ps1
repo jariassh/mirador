@@ -173,6 +173,8 @@ function Nueva-Ventana {
     $f.MinimizeBox     = $false
     $f.TopMost         = $true
     $f.Font            = New-Object System.Drawing.Font('Segoe UI', 9)
+    $ico = Obtener-Icono
+    if ($ico) { $f.Icon = $ico }
     return $f
 }
 
@@ -184,6 +186,116 @@ function Nueva-Etiqueta {
     $l.Size     = New-Object System.Drawing.Size($Ancho, $Alto)
     if ($Negrita) { $l.Font = New-Object System.Drawing.Font('Segoe UI', 9, [System.Drawing.FontStyle]::Bold) }
     return $l
+}
+
+<#
+    El icono de la aplicacion. Sin esto las ventanas salen con el icono de
+    PowerShell, que es lo primero que delata que esto es un script y no un
+    programa. Se busca en los dos sitios donde puede estar: junto al script
+    (como queda instalado) y en recursos\ (como esta en el repositorio).
+#>
+$script:IconoApp = $null
+function Obtener-Icono {
+    if ($script:IconoApp) { return $script:IconoApp }
+    foreach ($ruta in @(
+        (Join-Path $PSScriptRoot 'mirador.ico'),
+        (Join-Path $PSScriptRoot 'recursos\mirador.ico')
+    )) {
+        if (Test-Path $ruta) {
+            try { $script:IconoApp = New-Object System.Drawing.Icon($ruta); return $script:IconoApp }
+            catch { Escribir-Log "No se pudo cargar el icono: $($_.Exception.Message)" }
+        }
+    }
+    return $null
+}
+
+<#
+    Encabezado de ventana: franja blanca con el titulo grande y una linea de
+    apoyo en gris. Da jerarquia sin pedirle al usuario que lea todo el cuerpo
+    para entender de que se trata la ventana.
+
+    Devuelve la Y donde puede empezar el contenido.
+#>
+function Nuevo-Encabezado {
+    param(
+        [System.Windows.Forms.Form] $Ventana,
+        [string] $Titulo,
+        [string] $Subtitulo = ''
+    )
+
+    $alto = if ($Subtitulo) { 66 } else { 50 }
+
+    $panel = New-Object System.Windows.Forms.Panel
+    $panel.Location  = New-Object System.Drawing.Point(0, 0)
+    $panel.Size      = New-Object System.Drawing.Size($Ventana.ClientSize.Width, $alto)
+    $panel.BackColor = [System.Drawing.Color]::White
+    $Ventana.Controls.Add($panel)
+
+    $lblT = New-Object System.Windows.Forms.Label
+    $lblT.Text      = $Titulo
+    $lblT.Location  = New-Object System.Drawing.Point(20, 14)
+    $lblT.Size      = New-Object System.Drawing.Size(($Ventana.ClientSize.Width - 40), 24)
+    $lblT.Font      = New-Object System.Drawing.Font('Segoe UI Semibold', 12)
+    $lblT.ForeColor = [System.Drawing.Color]::FromArgb(23, 23, 23)
+    $panel.Controls.Add($lblT)
+
+    if ($Subtitulo) {
+        $lblS = New-Object System.Windows.Forms.Label
+        $lblS.Text      = $Subtitulo
+        $lblS.Location  = New-Object System.Drawing.Point(20, 40)
+        $lblS.Size      = New-Object System.Drawing.Size(($Ventana.ClientSize.Width - 40), 18)
+        $lblS.ForeColor = [System.Drawing.Color]::FromArgb(96, 96, 96)
+        $panel.Controls.Add($lblS)
+    }
+
+    # La linea de separacion se dibuja como un panel de 1 pixel: es lo mas
+    # barato que se ve bien en los dos temas de Windows.
+    $linea = New-Object System.Windows.Forms.Panel
+    $linea.Location  = New-Object System.Drawing.Point(0, ($alto - 1))
+    $linea.Size      = New-Object System.Drawing.Size($Ventana.ClientSize.Width, 1)
+    $linea.BackColor = [System.Drawing.Color]::FromArgb(222, 222, 222)
+    $Ventana.Controls.Add($linea)
+    $linea.BringToFront()
+
+    return ($alto + 14)
+}
+
+<#
+    Barra de botones alineada a la DERECHA, todos del mismo ancho.
+
+    Es la regla que ordena las ventanas: antes cada boton tenia su ancho y su
+    posicion propia -110, 130, 150, 250- y los bordes no coincidian con nada.
+    Windows pone las acciones abajo a la derecha y la principal de ultima; con
+    esto todas las ventanas de Mirador se ven iguales sin tener que calcular
+    coordenadas a mano en cada una.
+
+    $Definiciones: arreglo de hashtables @{ Texto = '...'; Accion = { ... } }.
+    Devuelve los botones creados, en el mismo orden.
+#>
+function Nueva-BarraBotones {
+    param(
+        [System.Windows.Forms.Form] $Ventana,
+        [array] $Definiciones,
+        [int] $Y,
+        [int] $Ancho = 150,
+        [int] $Alto = 32,
+        [int] $Separacion = 10,
+        [int] $Margen = 20
+    )
+
+    $n     = $Definiciones.Count
+    $total = ($n * $Ancho) + (($n - 1) * $Separacion)
+    $x     = $Ventana.ClientSize.Width - $Margen - $total
+
+    $creados = @()
+    foreach ($d in $Definiciones) {
+        $b = Nuevo-Boton $d.Texto $x $Y $Ancho $Alto
+        if ($d.Accion) { $b.Add_Click($d.Accion) }
+        $Ventana.Controls.Add($b)
+        $creados += $b
+        $x += $Ancho + $Separacion
+    }
+    return $creados
 }
 
 function Nuevo-Boton {
@@ -775,14 +887,14 @@ function Marca-Sugerida {
 function Mostrar-ElegirMarca {
     param([string] $Sugerida)
 
-    $f = Nueva-Ventana 'Preparar mi teléfono' 430 360
+    $f = Nueva-Ventana 'Preparar mi teléfono' 456 356
 
-    $f.Controls.Add((Nueva-Etiqueta '¿Qué marca es tu teléfono?' 20 18 380 -Negrita))
-    $f.Controls.Add((Nueva-Etiqueta 'El menú se llama distinto en cada marca, por eso preguntamos.' 20 42 380 34))
+    $y = Nuevo-Encabezado $f '¿Qué marca es tu teléfono?' 'El menú se llama distinto en cada marca'
 
     $lista = New-Object System.Windows.Forms.ListBox
-    $lista.Location = New-Object System.Drawing.Point(20, 82)
-    $lista.Size     = New-Object System.Drawing.Size(380, 165)
+    $lista.Location = New-Object System.Drawing.Point(20, $y)
+    $lista.Size     = New-Object System.Drawing.Size(400, 152)
+    $lista.BorderStyle = 'FixedSingle'
     foreach ($m in $script:GuiasPorMarca.Keys) { $lista.Items.Add($m) | Out-Null }
 
     if ($Sugerida -and $lista.Items.Contains($Sugerida)) {
@@ -794,20 +906,16 @@ function Mostrar-ElegirMarca {
 
     $elegido = [pscustomobject]@{ Valor = '' }
 
-    $btnSiguiente = Nuevo-Boton 'Siguiente' 20 270 120
-    $btnSiguiente.Add_Click({ $elegido.Valor = [string] $lista.SelectedItem; $f.Close() })
-    $f.Controls.Add($btnSiguiente)
-
     # Doble clic sobre la marca hace lo mismo que Siguiente: es lo que la
     # gente intenta sin pensarlo.
     $lista.Add_DoubleClick({ $elegido.Valor = [string] $lista.SelectedItem; $f.Close() })
 
-    $btnCancelar = Nuevo-Boton 'Cancelar' 290 270 110
-    $btnCancelar.Add_Click({ $elegido.Valor = ''; $f.Close() })
-    $f.Controls.Add($btnCancelar)
-
-    $f.AcceptButton = $btnSiguiente
-    $f.CancelButton = $btnCancelar
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Cancelar';  Accion = { $elegido.Valor = ''; $f.Close() } },
+        @{ Texto = 'Siguiente'; Accion = { $elegido.Valor = [string] $lista.SelectedItem; $f.Close() } }
+    ) 252 140
+    $f.CancelButton = $botones[0]
+    $f.AcceptButton = $botones[1]
 
     $f.Add_Shown({ $f.Activate() })
     $f.ShowDialog() | Out-Null
@@ -828,36 +936,31 @@ function Mostrar-GuiaMarca {
     param([string] $Marca)
 
     $guia = $script:GuiasPorMarca[$Marca]
-    $f    = Nueva-Ventana "Preparar mi teléfono — $Marca" 520 495
+    $f    = Nueva-Ventana "Preparar mi teléfono" 556 540
 
-    $f.Controls.Add((Nueva-Etiqueta "Paso 1 · Activa las Opciones de desarrollador" 20 16 460 -Negrita))
-    $f.Controls.Add((Nueva-Etiqueta $guia.Activar 20 40 460 112))
+    $y = Nuevo-Encabezado $f "Preparar un $Marca" 'Dos pasos, una sola vez'
 
-    $f.Controls.Add((Nueva-Etiqueta "Paso 2 · Enciende la depuración" 20 162 460 -Negrita))
-    $f.Controls.Add((Nueva-Etiqueta $guia.Depurar 20 186 460 115))
+    $f.Controls.Add((Nueva-Etiqueta "Paso 1 · Activa las Opciones de desarrollador" 20 $y 500 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta $guia.Activar 20 ($y + 24) 500 112))
 
-    $f.Controls.Add((Nueva-Etiqueta "Para usarlo sin cable, enciende además «Depuración inalámbrica» en esa misma pantalla. Necesita Android 11 o superior." 20 315 460 46))
+    $f.Controls.Add((Nueva-Etiqueta "Paso 2 · Enciende la depuración" 20 ($y + 146) 500 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta $guia.Depurar 20 ($y + 170) 500 115))
+
+    $f.Controls.Add((Nueva-Etiqueta "Para usarlo sin cable, enciende además «Depuración inalámbrica» en esa misma pantalla. Necesita Android 11 o superior." 20 ($y + 299) 500 46))
 
     $accion = [pscustomobject]@{ Valor = 'cancelar' }
 
-    $btnListo = Nuevo-Boton 'Listo, busca mi teléfono' 20 392 190 32
-    $btnListo.Add_Click({ $accion.Valor = 'reintentar'; $f.Close() })
-    $f.Controls.Add($btnListo)
-
-    # La salida de emergencia. Aplica a todas las marcas porque el menu real
-    # cambia entre versiones del mismo fabricante, y quedarse sin salida es
-    # peor que una ruta imperfecta.
-    $btnNoVeo = Nuevo-Boton 'No veo esa opción' 225 392 150 32
-    $btnNoVeo.Add_Click({
-        Mostrar-Mensaje "Ruta que sirve en casi todos los Android:`n`n$($script:RutaGenerica)" 'Preparar mi teléfono'
-    })
-    $f.Controls.Add($btnNoVeo)
-
-    $btnAtras = Nuevo-Boton 'Atrás' 390 392 90 32
-    $btnAtras.Add_Click({ $accion.Valor = 'atras'; $f.Close() })
-    $f.Controls.Add($btnAtras)
-
-    $f.AcceptButton = $btnListo
+    # "No veo esa opcion" es la salida de emergencia, y aplica a todas las
+    # marcas: el menu real cambia entre versiones del mismo fabricante, y
+    # quedarse sin salida es peor que una ruta imperfecta.
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'No veo esa opción'; Accion = {
+            Mostrar-Mensaje "Ruta que sirve en casi todos los Android:`n`n$($script:RutaGenerica)" 'Preparar mi teléfono'
+        } },
+        @{ Texto = 'Atrás';                   Accion = { $accion.Valor = 'atras';      $f.Close() } },
+        @{ Texto = 'Listo, busca mi teléfono'; Accion = { $accion.Valor = 'reintentar'; $f.Close() } }
+    ) 448 160
+    $f.AcceptButton = $botones[2]
 
     $f.Add_Shown({ $f.Activate() })
     $f.ShowDialog() | Out-Null
@@ -1111,14 +1214,16 @@ function Formatear-Diagnostico {
 }
 
 function Mostrar-Diagnostico {
-    $f = Nueva-Ventana 'Revisar mi equipo' 560 520
+    $f = Nueva-Ventana 'Revisar mi equipo' 580 540
 
-    $lblResumen = Nueva-Etiqueta 'Revisando…' 20 16 500 20 -Negrita
+    $y = Nuevo-Encabezado $f 'Revisar mi equipo' 'Qué está listo y qué falta para conectar'
+
+    $lblResumen = Nueva-Etiqueta 'Revisando…' 20 $y 524 20 -Negrita
     $f.Controls.Add($lblResumen)
 
     $caja = New-Object System.Windows.Forms.TextBox
-    $caja.Location   = New-Object System.Drawing.Point(20, 44)
-    $caja.Size       = New-Object System.Drawing.Size(505, 355)
+    $caja.Location   = New-Object System.Drawing.Point(20, ($y + 28))
+    $caja.Size       = New-Object System.Drawing.Size(524, 330)
     $caja.Multiline  = $true
     $caja.ReadOnly   = $true
     $caja.ScrollBars = 'Vertical'
@@ -1149,22 +1254,15 @@ function Mostrar-Diagnostico {
         Escribir-Log "Diagnostico: $fallas fallas, $avisos avisos"
     }
 
-    $btnOtra = Nuevo-Boton 'Revisar otra vez' 20 420 140 32
-    $btnOtra.Add_Click($revisar)
-    $f.Controls.Add($btnOtra)
-
-    $btnLog = Nuevo-Boton 'Abrir el registro' 175 420 140 32
-    $btnLog.Add_Click({
-        if (Test-Path $script:ArchivoLog) { Start-Process notepad.exe $script:ArchivoLog }
-        else { Mostrar-Mensaje 'Todavía no hay registro que abrir.' 'Revisar mi equipo' }
-    })
-    $f.Controls.Add($btnLog)
-
-    $btnCerrar = Nuevo-Boton 'Cerrar' 425 420 100 32
-    $btnCerrar.Add_Click({ $f.Close() })
-    $f.Controls.Add($btnCerrar)
-
-    $f.CancelButton = $btnCerrar
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Abrir el registro'; Accion = {
+            if (Test-Path $script:ArchivoLog) { Start-Process notepad.exe $script:ArchivoLog }
+            else { Mostrar-Mensaje 'Todavía no hay registro que abrir.' 'Revisar mi equipo' }
+        } },
+        @{ Texto = 'Revisar otra vez'; Accion = $revisar },
+        @{ Texto = 'Cerrar';           Accion = { $f.Close() } }
+    ) 448 150
+    $f.CancelButton = $botones[2]
     $f.Add_Shown({ $f.Activate(); & $revisar })
     $f.ShowDialog() | Out-Null
 }
@@ -1175,42 +1273,42 @@ function Mostrar-Diagnostico {
 
 function Mostrar-SinDispositivos {
     param([array] $Detectados)
+    $f = Nueva-Ventana 'Mirador' 556 476
 
-    $f = Nueva-Ventana 'Mirador' 490 420
-
-    $f.Controls.Add((Nueva-Etiqueta 'No se encontró ningún celular listo' 20 18 420 -Negrita))
+    $y = Nuevo-Encabezado $f 'No se encontró ningún celular' 'Elige cómo quieres continuar'
 
     $sinAutorizar = @($Detectados | Where-Object { $_.Estado -eq 'unauthorized' })
     if ($sinAutorizar.Count -gt 0) {
         $texto = "El celular está conectado pero falta autorizarlo.`n`nMira la pantalla del teléfono y toca «Permitir» en el aviso de depuración USB, luego presiona Reintentar."
     } else {
-        $texto = "Opciones:`n`n• ¿Primera vez con este celular? Empieza por Preparar mi teléfono: hay que activar la depuración una sola vez.`n• Si el celular tiene cable, conéctalo y presiona Reintentar.`n• Si solo funciona por Wi-Fi, enciende la Depuración inalámbrica en el teléfono y usa Emparejar.`n• Buscar en la red rastrea el puerto 5555 en toda la Wi-Fi por si cambió la IP."
+        $texto = "• ¿Primera vez con este celular? Empieza por Preparar mi teléfono: hay que activar la depuración una sola vez.`n• Si el celular tiene cable, conéctalo y presiona Reintentar.`n• Si solo funciona por Wi-Fi, enciende la Depuración inalámbrica en el teléfono y usa Emparejar.`n• Buscar en la red rastrea el puerto 5555 en toda la Wi-Fi por si cambió la IP."
     }
 
-    $lbl = Nueva-Etiqueta $texto 20 46 440 140
+    $lbl = Nueva-Etiqueta $texto 20 $y 500 116
     $f.Controls.Add($lbl)
 
     $accion = [pscustomobject]@{ Valor = 'cancelar' }
 
-    # Accion principal y separada del resto: quien no encuentra su telefono la
-    # primera vez casi siempre es porque no lo ha preparado, y los otros tres
-    # botones dan ese paso por hecho.
-    $btnPreparar = Nuevo-Boton 'Preparar mi teléfono (primera vez)' 20 192 250 34
+    # La accion principal va sola y a todo el ancho: quien no encuentra su
+    # telefono la primera vez casi siempre es porque no lo ha preparado, y las
+    # otras cuatro opciones dan ese paso por hecho.
+    $btnPreparar = Nuevo-Boton 'Preparar mi teléfono (primera vez)' 20 206 500 40
     $btnPreparar.Add_Click({ $accion.Valor = 'preparar'; $f.Close() })
     $f.Controls.Add($btnPreparar)
 
-    $lblEstado = Nueva-Etiqueta '' 20 236 440 18
+    $lblEstado = Nueva-Etiqueta '' 20 254 500 18
     $f.Controls.Add($lblEstado)
 
-    $btnReintentar = Nuevo-Boton 'Reintentar' 20 330 110
+    # Las cuatro secundarias, todas del mismo ancho y en reja.
+    $btnReintentar = Nuevo-Boton 'Reintentar' 20 280 240 34
     $btnReintentar.Add_Click({ $accion.Valor = 'reintentar'; $f.Close() })
     $f.Controls.Add($btnReintentar)
 
-    $btnEmparejar = Nuevo-Boton 'Emparejar Wi-Fi' 140 330 130
+    $btnEmparejar = Nuevo-Boton 'Emparejar Wi-Fi' 280 280 240 34
     $btnEmparejar.Add_Click({ $accion.Valor = 'emparejar'; $f.Close() })
     $f.Controls.Add($btnEmparejar)
 
-    $btnBuscar = Nuevo-Boton 'Buscar en la red' 20 262 150 26
+    $btnBuscar = Nuevo-Boton 'Buscar en la red' 20 322 240 34
     $btnBuscar.Add_Click({
         $lblEstado.Text = 'Rastreando la red…'
         $f.Refresh()
@@ -1219,14 +1317,14 @@ function Mostrar-SinDispositivos {
     })
     $f.Controls.Add($btnBuscar)
 
-    $btnRevisar = Nuevo-Boton 'Revisar mi equipo' 190 262 150 26
+    $btnRevisar = Nuevo-Boton 'Revisar mi equipo' 280 322 240 34
     $btnRevisar.Add_Click({ Mostrar-Diagnostico })
     $f.Controls.Add($btnRevisar)
 
-    $btnCancelar = Nuevo-Boton 'Cancelar' 330 330 110
-    $btnCancelar.Add_Click({ $accion.Valor = 'cancelar'; $f.Close() })
-    $f.Controls.Add($btnCancelar)
-
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Cancelar'; Accion = { $accion.Valor = 'cancelar'; $f.Close() } }
+    ) 382
+    $f.CancelButton = $botones[0]
     $f.Add_Shown({ $f.Activate() })
     $f.ShowDialog() | Out-Null
 

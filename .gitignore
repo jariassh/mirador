@@ -4,11 +4,6 @@
 !.env.example
 .mcp.json
 
-# Lienzo de diseño: el .html sembrado pesa ~2,5 MB y se regenera desde
-# los .dc.html, que sí están versionados.
-diseno/*.html
-!diseno/*.dc.html
-
 # Temporales de Windows
 Thumbs.db
 desktop.ini

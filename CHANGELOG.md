@@ -8,6 +8,15 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 
 ## [No publicado]
 
+## [1.0.4] — 2026-09-15
+
+### Cambiado
+
+- Sale del repositorio el lienzo con el que se diseñó el ícono. Era proceso
+  interno y no le aporta nada a quien descarga la herramienta; los archivos
+  del ícono que sí importan —el `.ico` y los `.svg` editables— siguen en
+  `recursos/`.
+
 ## [1.0.3] — 2026-09-15
 
 ### Corregido

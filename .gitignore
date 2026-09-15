@@ -13,3 +13,6 @@ desktop.ini
 # Editores
 .vscode/
 .idea/
+
+# Salida del instalador: el .exe se publica en Releases, no en el repositorio
+/dist/

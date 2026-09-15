@@ -300,6 +300,55 @@ lado del PC no le faltaba nada.
 - Que el relanzamiento elevado ya lleva `-WindowStyle Hidden`.
 - Capturado el asistente con la línea nueva y la lista recolocada.
 
+## `M-4` — la vitrina
+
+**El GIF, y el susto.** Se grabó la secuencia real con los dos teléfonos de
+Jonathan: el selector, el TECNO apareciendo, moverlo a un lado, el segundo
+selector, el moto a la derecha. 17,9 s, 1,49 MB, 760×427.
+
+⚠️ **La primera toma no se podía publicar.** El moto estaba bloqueado y mostraba
+su pantalla de bloqueo **con notificaciones legibles**: nombres y apellidos de
+personas reales y asuntos de mensajes de terceros. Iba a un repositorio público.
+Se descartó entera.
+
+En la segunda toma —con los dos teléfonos en su pantalla de inicio— Jonathan
+avisó que **había usado el moto sin darse cuenta durante la grabación**. Al
+revisar, en el último segundo aparecía la cortina de notificaciones desplegada,
+con el nombre y la foto de una persona, una dirección de calle y un aviso de
+LastPass. Se recortó el GIF antes de ese punto.
+
+> **La lección, y cuesta poco aprenderla:** revisar cuatro fotogramas sueltos no
+> es revisar la grabación. Las dos veces los fotogramas que miré primero estaban
+> limpios. Lo que sirvió fue armar una **hoja de contactos de toda la línea de
+> tiempo** —un fotograma por segundo, recortando la zona del teléfono— y mirarla
+> entera antes de dar nada por bueno.
+
+**El instalador.** `instalador/mirador.iss` produce `MiradorSetup.exe` (2 MB).
+Sin administrador, a `%LOCALAPPDATA%\Mirador` —la misma carpeta que usa
+`instalar.ps1`, así conviven las dos vías—, acceso directo con
+`-WindowStyle Hidden` y entrada en «Agregar o quitar programas». **No empaqueta
+scrcpy**: Mirador lo instala solo desde su fuente oficial, y empaquetarlo
+obligaría a redistribuirlo y mantenerlo a mano. `/dist/` va al `.gitignore`: el
+`.exe` se publica en Releases, no en el repositorio.
+
+Verificado instalando de verdad en una carpeta temporal y desinstalando después:
+archivos, argumentos del acceso directo e ícono correctos, y la desinstalación
+dejó limpios la carpeta, el menú Inicio y «Agregar o quitar programas».
+
+> Un susto de en medio: tras desinstalar quedaba un acceso directo en el
+> escritorio y lo di por residuo del instalador. **Era el de Jonathan**, creado
+> por `instalar.ps1` a las 9:05 de esa mañana y apuntando a su instalación real.
+> Mirar a dónde apuntaba antes de borrarlo evitó quitarle su acceso directo.
+
+**El README** pasó a encabezar con el `.exe` y dejó la vía de PowerShell como
+alternativa plegada; se explica el aviso de SmartScreen en vez de esconderlo
+—«si prefieres no fiarte de mi palabra, el código está completo acá»—, se
+sumaron el asistente y el diagnóstico a «Qué hace por ti», y se cierra con el
+pie que lleva a `servicios.jariash.com`.
+
+**El repositorio volvió a público** (`isPrivate: false`, 0 forks) y la fila de
+`mirador/` en el `CLAUDE.md` del workspace quedó corregida.
+
 ## Estado al cerrar
 
 - `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.
@@ -309,7 +358,7 @@ lado del PC no le faltaba nada.
 - `M-6` cerrado — orden visual de los diálogos, con la regresión verificada.
 - `M-7` cerrado — coherencia del primer arranque: adb verificado, consola oculta
   al elevar y el asistente aclarando que el PC ya está listo.
-- Abierto: `M-4` (la vitrina: GIF, instalador Inno Setup, README y volver a
-  público).
-- El `CLAUDE.md` del workspace decía **(PÚBLICO)**; quedó corregido a privado
-  mientras dure el estudio. **Al ejecutar `M-4` hay que volver a cambiarlo.**
+- `M-4` cerrado — GIF, instalador, README y repositorio público otra vez.
+- **El tablero quedó en cero.** Nada abierto.
+- Anotado como idea sin decidir: publicar en la Microsoft Store, que firma
+  gratis y es la única vía a cero avisos de SmartScreen sin pagar certificado.

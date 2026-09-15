@@ -5,38 +5,13 @@
 
 | Prioridad | Total |
 | :-------- | ----: |
-| 🟠 Alto   |     1 |
-| **TOTAL** | **1** |
+| **TOTAL** | **0** |
 
-Queda solo `M-4`. `M-2` y `M-3` ya están cerrados.
-
----
-
-## 🟠 Alto
-
-### `M-4` · La vitrina — que se vea en 30 segundos
-
-**El problema.** Si Mirador es la carta de presentación, lo que decide es lo
-que un visitante ve en los primeros 30 segundos, y hoy la instalación arranca
-con `powershell -ExecutionPolicy Bypass`, que a un no técnico lo espanta.
-
-**Qué se hace.**
-
-1. Un **GIF de ~20 segundos** en el README: doble clic → el celular en pantalla.
-   Necesita un teléfono real conectado para grabarlo.
-2. Un **instalador con Inno Setup** — gratuito y estándar. Elimina el
-   `powershell -ExecutionPolicy Bypass` y agrega la entrada en «Agregar o quitar
-   programas». ⛔ **PS2EXE quedó descartado:** sus `.exe` disparan falsos
-   positivos de antivirus, y un aviso de amenaza es el peor primer contacto
-   posible para una carta de presentación. Camino posterior para quitar también
-   el aviso de SmartScreen, sin pagar certificado: publicar en la Microsoft
-   Store, que firma gratis.
-3. Un pie en el README que lleve a `servicios.jariash.com`.
-4. Sumar a «Qué hace por ti» del README el asistente de preparación de `M-2`.
-   No se hizo al cerrar `M-2` a propósito: el README no se toca en cada merge
-   —es el generador de conflictos número uno—, y `M-4` ya lo va a editar.
-5. ⛔ **Volver el repositorio a público** y corregir la fila de `mirador/` en el
-   `CLAUDE.md` del workspace, que quedó marcada **(PRIVADO)** durante el estudio.
+**No hay nada abierto.** Lo cerrado el 2026-09-15 está en
+[la sesión 239](sessions/2026-09-15-sesion-239-estudio-de-monetizacion-y-decision.md):
+`M-1` (estudio de monetización), `M-2` (asistente de preparación), `M-3`
+(diagnóstico en un clic), `M-4` (la vitrina), `M-5` (estudio de nombres),
+`M-6` (orden visual) y `M-7` (coherencia del primer arranque).
 
 ---
 
@@ -46,3 +21,12 @@ Registrado el 2026-09-15 para no volver a discutirlo: **grabación de pantalla,
 mapeo de teclas para juegos, arrastrar archivos y cualquier panel de opciones
 avanzadas.** Cada perilla nueva acerca a Mirador a QtScrcpy —que lo hace mejor,
 gratis y multiplataforma— y lo aleja de lo único que lo hace distinto.
+
+## Ideas anotadas, sin decidir
+
+⚠️ Esto es una recomendación, no una decisión de Jonathan.
+
+- **Publicar en la Microsoft Store.** Es la única vía a cero advertencias de
+  SmartScreen sin pagar un certificado de ~$200 al año: el registro para
+  desarrolladores individuales ya no cuesta, Microsoft aloja el binario y **lo
+  firma gratis**. A cambio exige empaquetar en MSIX, que es trabajo nuevo.

@@ -732,24 +732,26 @@ function Limpiar-Muertos {
 # ---------------------------------------------------------------------------
 
 function Mostrar-Emparejamiento {
-    $f = Nueva-Ventana 'Emparejar por Wi-Fi' 470 330
+    $f = Nueva-Ventana 'Emparejar por Wi-Fi' 500 424
 
-    $f.Controls.Add((Nueva-Etiqueta 'En el teléfono:' 20 15 420 -Negrita))
-    $f.Controls.Add((Nueva-Etiqueta "Ajustes › Opciones de desarrollador › Depuración inalámbrica ›`nVincular dispositivo con código de vinculación" 20 38 420 40))
+    $y = Nuevo-Encabezado $f 'Emparejar por Wi-Fi' 'Se hace una sola vez con cada teléfono'
 
-    $f.Controls.Add((Nueva-Etiqueta 'Dirección y puerto de vinculación' 20 92 300))
+    $f.Controls.Add((Nueva-Etiqueta 'En el teléfono:' 20 $y 444 -Negrita))
+    $f.Controls.Add((Nueva-Etiqueta "Ajustes › Opciones de desarrollador › Depuración inalámbrica ›`nVincular dispositivo con código de vinculación" 20 ($y + 23) 444 40))
+
+    $f.Controls.Add((Nueva-Etiqueta 'Dirección y puerto de vinculación' 20 ($y + 77) 300))
     $txtDir = New-Object System.Windows.Forms.TextBox
-    $txtDir.Location = New-Object System.Drawing.Point(20, 113)
+    $txtDir.Location = New-Object System.Drawing.Point(20, ($y + 98))
     $txtDir.Size     = New-Object System.Drawing.Size(280, 24)
     $f.Controls.Add($txtDir)
 
-    $lblAuto = Nueva-Etiqueta '' 20 141 420 18
+    $lblAuto = Nueva-Etiqueta '' 20 ($y + 126) 444 18
     $lblAuto.ForeColor = [System.Drawing.Color]::FromArgb(0, 120, 60)
     $f.Controls.Add($lblAuto)
 
-    $f.Controls.Add((Nueva-Etiqueta 'Código de 6 dígitos' 20 168 300))
+    $f.Controls.Add((Nueva-Etiqueta 'Código de 6 dígitos' 20 ($y + 153) 300))
     $txtCodigo = New-Object System.Windows.Forms.TextBox
-    $txtCodigo.Location  = New-Object System.Drawing.Point(20, 189)
+    $txtCodigo.Location  = New-Object System.Drawing.Point(20, ($y + 174))
     $txtCodigo.Size      = New-Object System.Drawing.Size(120, 24)
     $txtCodigo.MaxLength = 6
     $f.Controls.Add($txtCodigo)
@@ -757,7 +759,7 @@ function Mostrar-Emparejamiento {
     # Se autocompleta la dirección: mientras el teléfono muestra el código,
     # anuncia el servicio de vinculación por mDNS. Así solo hay que teclear
     # los 6 dígitos, que es lo único que el computador no puede adivinar.
-    $btnDetectar = Nuevo-Boton 'Detectar' 310 112 120 26
+    $btnDetectar = Nuevo-Boton 'Detectar' 310 ($y + 97) 120 26
     $btnDetectar.Add_Click({
         $d = Obtener-ServicioEmparejamiento
         if ($d) {
@@ -770,12 +772,12 @@ function Mostrar-Emparejamiento {
     })
     $f.Controls.Add($btnDetectar)
 
-    $lblEstado = Nueva-Etiqueta '' 20 222 420 18
+    $lblEstado = Nueva-Etiqueta '' 20 ($y + 207) 444 18
     $f.Controls.Add($lblEstado)
 
     $resultado = [pscustomobject]@{ Exito = $false }
 
-    $btnEmparejar = Nuevo-Boton 'Emparejar' 200 250 110
+    $btnEmparejar = Nuevo-Boton 'Emparejar' 344 ($y + 239) 140 32
     $btnEmparejar.Add_Click({
         $dir = $txtDir.Text.Trim()
         $cod = $txtCodigo.Text.Trim()
@@ -800,9 +802,11 @@ function Mostrar-Emparejamiento {
     })
     $f.Controls.Add($btnEmparejar)
 
-    $btnCancelar = Nuevo-Boton 'Cancelar' 320 250 110
+    $btnCancelar = Nuevo-Boton 'Cancelar' 194 ($y + 239) 140 32
     $btnCancelar.Add_Click({ $f.Close() })
     $f.Controls.Add($btnCancelar)
+    $f.CancelButton = $btnCancelar
+    $f.AcceptButton = $btnEmparejar
 
     $f.Add_Shown({
         $f.Activate()
@@ -1374,13 +1378,14 @@ function Mostrar-SinDispositivos {
 function Mostrar-Selector {
     param([array] $Dispositivos)
 
-    $f = Nueva-Ventana 'Elige el celular' 430 345
+    $f = Nueva-Ventana 'Elige el celular' 456 384
 
-    $f.Controls.Add((Nueva-Etiqueta 'Hay varios celulares disponibles' 20 18 380 -Negrita))
+    $y = Nuevo-Encabezado $f 'Elige el celular' 'Hay varios disponibles ahora mismo'
 
     $lista = New-Object System.Windows.Forms.ListBox
-    $lista.Location = New-Object System.Drawing.Point(20, 48)
-    $lista.Size     = New-Object System.Drawing.Size(380, 195)
+    $lista.Location = New-Object System.Drawing.Point(20, $y)
+    $lista.Size     = New-Object System.Drawing.Size(400, 180)
+    $lista.BorderStyle = 'FixedSingle'
     $lista.Font     = New-Object System.Drawing.Font('Segoe UI', 10)
 
     foreach ($d in $Dispositivos) {
@@ -1388,8 +1393,17 @@ function Mostrar-Selector {
         if (Obtener-VentanaDe $titulo) { $marca = '  ●  ya abierto' } else { $marca = '' }
         $lista.Items.Add(('{0}   ({1}){2}' -f $d.Nombre, $d.Enlace, $marca)) | Out-Null
     }
+    # La lista se ajusta a cuantos telefonos haya: con dos, una caja de 180
+    # px queda medio vacia; con ocho, hace falta toda. Con ella se mueven los
+    # botones y el alto de la ventana.
+    $altoLista = [Math]::Min(180, [Math]::Max(58, ($lista.Items.Count * 19) + 12))
+    $lista.Size = New-Object System.Drawing.Size(400, $altoLista)
+
     $lista.SelectedIndex = 0
     $f.Controls.Add($lista)
+
+    $yBotones = $y + $altoLista + 26
+    $f.ClientSize = New-Object System.Drawing.Size(440, ($yBotones + 32 + 20))
 
     $eleccion = [pscustomobject]@{ Indice = -1 }
 
@@ -1402,15 +1416,12 @@ function Mostrar-Selector {
 
     $lista.Add_DoubleClick($conectar)
 
-    $btnConectar = Nuevo-Boton 'Conectar' 180 258 110
-    $btnConectar.Add_Click($conectar)
-    $f.Controls.Add($btnConectar)
-
-    $btnCancelar = Nuevo-Boton 'Cancelar' 300 258 110
-    $btnCancelar.Add_Click({ $f.Close() })
-    $f.Controls.Add($btnCancelar)
-
-    $f.AcceptButton = $btnConectar
+    $botones = Nueva-BarraBotones $f @(
+        @{ Texto = 'Cancelar'; Accion = { $f.Close() } },
+        @{ Texto = 'Conectar'; Accion = $conectar }
+    ) $yBotones 140
+    $f.CancelButton = $botones[0]
+    $f.AcceptButton = $botones[1]
     $f.Add_Shown({ $f.Activate(); $lista.Focus() })
     $f.ShowDialog() | Out-Null
 

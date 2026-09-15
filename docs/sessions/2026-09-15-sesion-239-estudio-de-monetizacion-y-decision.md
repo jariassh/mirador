@@ -79,11 +79,52 @@ juegos, arrastrar archivos y cualquier panel de opciones avanzadas. Cada
 perilla acerca a Mirador a QtScrcpy y lo aleja de lo único que lo hace
 distinto.
 
+## Adenda — empaquetado: PS2EXE descartado, Inno Setup en su lugar
+
+Jonathan preguntó si Mirador debía salir como `.exe` con PS2EXE, a modo de
+instalador de Windows. **Se descartó PS2EXE**, y por una razón distinta a la del
+estudio de monetización: allá no servía porque no protege el código; acá, con el
+criterio nuevo —que se vea terminado— tampoco sirve, porque está documentado que
+sus `.exe` **disparan falsos positivos de antivirus**, incluido Defender. Para
+una carta de presentación, un aviso de amenaza es el peor primer contacto
+posible. Y no aporta nada: `instalar.ps1` ya crea accesos directos y desinstala
+sin pedir administrador.
+
+**Lo que sí se hará, dentro de `M-4`:** un instalador con **Inno Setup**, que es
+gratuito, estándar, elimina el `powershell -ExecutionPolicy Bypass` de la
+instalación y agrega la entrada en «Agregar o quitar programas». Sin firma sale
+el aviso de SmartScreen, que deja continuar y es el diálogo que cualquiera
+reconoce de software independiente — no es lo mismo que una alerta de virus.
+
+**Anotado como camino posterior, no bloqueante:** la Microsoft Store ya no cobra
+registro a desarrolladores individuales, aloja el binario y **lo firma gratis**.
+Es la única vía a cero advertencias sin pagar un certificado de ~$200 al año.
+
+## Adenda — estudio de nombres: se queda «Mirador»
+
+Jonathan pidió evaluar si había un nombre mejor. El estudio está en
+[`estudio-nombres.md`](../estudio-nombres.md), con colisiones verificadas por
+`gh search repos` y por DNS. Cayeron **Vistazo** (choca con la revista
+ecuatoriana homónima, de 1957, con apps propias), **Atalaya** (en el mundo
+hispano «La Atalaya» es la revista de los Testigos de Jehová), **Retrovisor**
+(ya existe en GitHub, también capa de visualización) y **Balcón** (lleva tilde).
+
+Quedó **Catalejo** como único retador —espacio casi vacío y `catalejo.com`
+aparentemente libre—, pero con un lunar de fondo: un catalejo sirve para mirar
+de lejos algo **ajeno**, y esto espeja **tu propio** teléfono.
+
+> **Decisión de Jonathan:** se queda **Mirador**. Su única colisión de peso es
+> un visor de manuscritos digitalizados IIIF en GitHub (615 ★) — otro mundo,
+> otro público, y el repo vive namespaceado en `jariassh/mirador`. A cambio, no
+> carga connotación de vigilancia, que es el riesgo de marca serio de esta
+> categoría.
+
 ## Estado al cerrar
 
 - `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.
+- `M-5` cerrado — estudio de nombres hecho y decidido: sigue siendo Mirador.
 - Abiertos: `M-2` (asistente de preparación del teléfono), `M-3` (diagnóstico en
-  un clic), `M-4` (la vitrina: GIF y `.zip` en Releases). Aprobados los tres en
-  ese orden.
+  un clic), `M-4` (la vitrina: GIF, instalador Inno Setup y volver a público).
+  Aprobados los tres en ese orden.
 - El `CLAUDE.md` del workspace decía **(PÚBLICO)**; quedó corregido a privado
   mientras dure el estudio. **Al ejecutar `M-4` hay que volver a cambiarlo.**

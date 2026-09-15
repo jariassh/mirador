@@ -56,7 +56,13 @@ con `powershell -ExecutionPolicy Bypass`, que a un no técnico lo espanta.
 
 1. Un **GIF de ~20 segundos** en el README: doble clic → el celular en pantalla.
    Necesita un teléfono real conectado para grabarlo.
-2. Un **`.zip` en Releases** para descargar sin tocar la terminal.
+2. Un **instalador con Inno Setup** — gratuito y estándar. Elimina el
+   `powershell -ExecutionPolicy Bypass` y agrega la entrada en «Agregar o quitar
+   programas». ⛔ **PS2EXE quedó descartado:** sus `.exe` disparan falsos
+   positivos de antivirus, y un aviso de amenaza es el peor primer contacto
+   posible para una carta de presentación. Camino posterior para quitar también
+   el aviso de SmartScreen, sin pagar certificado: publicar en la Microsoft
+   Store, que firma gratis.
 3. Un pie en el README que lleve a `servicios.jariash.com`.
 4. ⛔ **Volver el repositorio a público** y corregir la fila de `mirador/` en el
    `CLAUDE.md` del workspace, que quedó marcada **(PRIVADO)** durante el estudio.

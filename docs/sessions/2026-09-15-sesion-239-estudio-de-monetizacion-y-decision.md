@@ -1,0 +1,89 @@
+# Sesión 239 — El estudio de monetización y la decisión
+
+**Fecha:** 2026-09-15 · **Proyecto:** `mirador/` · **Rama:** `M-1-estudiar-monetizacion`
+
+## Qué se hizo
+
+Se respondió `M-1` completo — el ítem que preguntaba si Mirador se puede
+monetizar — y Jonathan tomó la decisión. El informe quedó en
+[`estudio-monetizacion.md`](../estudio-monetizacion.md); acá solo el resumen y
+lo que se decidió.
+
+## Lo que encontró el estudio
+
+**1. Sí existe competencia, y está fuerte.** El mercado está partido:
+
+- **Cobran:** Vysor ($2,50/mes · $10/año · $40 pago único, con capa gratuita
+  limitada a USB) y AirDroid Personal ($29,99/año).
+- **No cobran, y son envoltorios de scrcpy igual que Mirador:** QtScrcpy
+  (30.771 estrellas, C++/Qt, multiplataforma), Escrcpy, scrcpygui.com y una
+  cola larga de lanzadores.
+
+La franja de «comodidad sobre scrcpy» ya está cubierta gratis por proyectos con
+años de trabajo encima.
+
+**2. Sí se puede cobrar por encima de algo libre.** scrcpy es Apache-2.0 y
+permite uso comercial; basta incluir el texto de la licencia y los avisos de
+copyright. Mirador es MIT y también permite venderse. Ninguna traba legal.
+
+⚠️ Pero una licencia MIT **ya entregada no se revoca**: quien clonó el repo
+mientras estuvo público conserva para siempre el derecho de usarlo, modificarlo
+y venderlo. Exposición real medida: ~5 horas públicas, **0 forks, 1 estrella**.
+
+**3. No se puede proteger el `.ps1`.** `PS2EXE` —el camino obvio— trae el
+parámetro `-extract`, que saca el script original del `.exe`; su propia
+documentación advierte que nunca guardes contraseñas adentro por eso. Proteger
+en serio exigiría reescribirlo en un lenguaje compilado, y aun así son 921
+líneas que orquestan `adb` y `scrcpy`: cualquiera rehace esa lógica mirando qué
+comandos lanza.
+
+**Las cuentas del modelo de $5:** Gumroad se queda el 10% → entran $4,50 por
+venta. Para hacer $100 al mes hacen falta 22 ventas mensuales sostenidas, sin
+marca ni tráfico, contra cuatro alternativas gratuitas — y cada venta trae
+derecho a soporte.
+
+## La decisión de Jonathan
+
+> **Mirador queda gratis, como carta de presentación.**
+
+El valor no está en los $4,50 por venta, está en ser la prueba pública de que
+entrega software terminado —ícono, instalador, README, versionado, licencia—, y
+eso alimenta a Jariash Group LLC y a `servicios.jariash.com`, donde un cliente
+vale mucho más que 22 ventas de $5.
+
+Jonathan había llegado por su cuenta a la misma conclusión revisando QtScrcpy y
+AirDroid: _«estuve pensando eso, en dejarlo gratis como mi carta de
+presentación»_.
+
+**El repositorio quedó en privado** durante el estudio, por decisión suya, para
+que nadie clonara el código mientras se decidía. Con el camino elegido, vuelve
+a público.
+
+## Y entonces, ¿se puede mejorar teniendo a QtScrcpy al lado?
+
+Sí, pero **no compitiéndoles de frente**. Agregarle grabación, mapeo de teclas
+o transferencia de archivos lo convierte en un clon peor de QtScrcpy, escrito
+en PowerShell.
+
+La pregunta que sirve no es «¿qué les falta a ellos?» sino **«¿a quién no están
+atendiendo?»**. Todos apuntan al desarrollador y al equipo de QA, en inglés,
+con paneles de perillas (bitrate, códec, resolución, recorte). Mirador es el
+único que apunta al que no sabe ni quiere saber qué es un bitrate — y ese
+usuario **se cae antes de llegar a Mirador**, en las Opciones de desarrollador
+del teléfono.
+
+De ahí salen los tres pendientes nuevos: `M-2`, `M-3` y `M-4`.
+
+⛔ **Lo que se decidió NO hacer:** grabación de pantalla, mapeo de teclas para
+juegos, arrastrar archivos y cualquier panel de opciones avanzadas. Cada
+perilla acerca a Mirador a QtScrcpy y lo aleja de lo único que lo hace
+distinto.
+
+## Estado al cerrar
+
+- `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.
+- Abiertos: `M-2` (asistente de preparación del teléfono), `M-3` (diagnóstico en
+  un clic), `M-4` (la vitrina: GIF y `.zip` en Releases). Aprobados los tres en
+  ese orden.
+- El `CLAUDE.md` del workspace decía **(PÚBLICO)**; quedó corregido a privado
+  mientras dure el estudio. **Al ejecutar `M-4` hay que volver a cambiarlo.**

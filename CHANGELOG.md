@@ -8,6 +8,14 @@ Está escrito para quien usa Mirador, no para quien lee el código.
 
 ## [No publicado]
 
+## [1.0.5] — 2026-09-15
+
+### Agregado
+
+- Captura en el README con dos teléfonos abiertos al mismo tiempo, cada uno
+  en su ventana y con el nombre de su equipo en el título. Es lo que ningún
+  párrafo explica bien.
+
 ## [1.0.4] — 2026-09-15
 
 ### Cambiado

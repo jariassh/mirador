@@ -119,12 +119,66 @@ de lejos algo **ajeno**, y esto espeja **tu propio** teléfono.
 > carga connotación de vigilancia, que es el riesgo de marca serio de esta
 > categoría.
 
+## `M-2` — el asistente de preparación del teléfono, hecho
+
+**Qué se agregó.** En la pantalla de «No se encontró ningún celular» apareció el
+botón **«Preparar mi teléfono (primera vez)»**, como acción principal y separada
+del resto: los otros tres botones daban por hecho que el teléfono ya estaba
+preparado, que es justo lo que le falta a quien llega ahí la primera vez.
+
+El asistente son dos diálogos: elegir la marca y ver la ruta exacta de **ese**
+menú. Las guías viven en una tabla `$script:GuiasPorMarca` — agregar una marca
+nueva es agregar una fila, no tocar el diálogo.
+
+**El huevo y la gallina.** Si la depuración no está activa, `adb` no ve el
+teléfono y no hay forma de detectar la marca: por eso el asistente **pregunta**.
+Cuando el teléfono sí aparece, `Marca-Sugerida` lee `ro.product.manufacturer` y
+deja la marca preseleccionada.
+
+### El hallazgo: la ruta de TECNO estaba mal
+
+Las rutas se verificaron contra la documentación de cada fabricante, pero de
+**TECNO/Infinix solo hay videos**, así que esa fila se escribió con la ruta
+genérica —«Acerca del teléfono › Información de software»—. Como Jonathan tenía
+el TECNO KL4 conectado por depuración inalámbrica, se leyó **el menú real del
+aparato** con `adb`, y resultó estar mal en dos cosas:
+
+- En HiOS 14, «Acerca del teléfono» **se llama «Mi teléfono»**.
+- **No existe** el submenú «Información de software»: «Número de compilación»
+  está en la misma pantalla, junto a «Versión de HiOS».
+
+La ruta del paso 2 —`Ajustes › Sistema › Opciones de desarrollador`— sí resultó
+correcta, confirmada también en pantalla. La fila quedó corregida con lo
+verificado, y el comentario del código dice de dónde salió cada dato.
+
+> **La lección, y por eso el botón «No veo esa opción» está en TODAS las
+> marcas:** una ruta escrita de memoria se ve igual de convincente que una
+> verificada. El menú real cambia entre versiones del mismo fabricante, y
+> quedarse sin salida es peor que una ruta imperfecta.
+
+### Cómo se verificó
+
+- **Sintaxis:** `Parser::ParseFile` sin errores, y el archivo conserva el **BOM
+  UTF-8** que el propio script documenta como obligatorio (sin él, PowerShell
+  5.1 lee las tildes como `Ã³`). El primer intento de parche falló justamente
+  por eso: el script del parche salió sin BOM y se corrompió a sí mismo.
+- **Visual:** capturados los cuatro diálogos, incluidos los dos casos extremos
+  —TECNO, el más alto, y Oppo/realme, el más largo— para confirmar que ningún
+  texto se corta ni se monta con los botones.
+- **Interacción real:** el diálogo de marca se manejó con teclado (abajo, abajo,
+  Enter) y devolvió `Motorola`, que es lo que verifica que los manejadores y el
+  botón por defecto funcionan.
+- **Lógica pura:** `Marca-Sugerida`, 9 de 9 casos.
+- **Contra aparatos reales:** el TECNO KL4 sugirió «TECNO / Infinix» y el
+  moto g(60)s sugirió «Motorola». El teléfono quedó como estaba: pantalla
+  apagada, en el inicio y sin archivos temporales.
+
 ## Estado al cerrar
 
 - `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.
 - `M-5` cerrado — estudio de nombres hecho y decidido: sigue siendo Mirador.
-- Abiertos: `M-2` (asistente de preparación del teléfono), `M-3` (diagnóstico en
-  un clic), `M-4` (la vitrina: GIF, instalador Inno Setup y volver a público).
-  Aprobados los tres en ese orden.
+- `M-2` cerrado — asistente de preparación, verificado contra dos teléfonos.
+- Abiertos: `M-3` (diagnóstico en un clic) y `M-4` (la vitrina: GIF, instalador
+  Inno Setup, README y volver a público), en ese orden.
 - El `CLAUDE.md` del workspace decía **(PÚBLICO)**; quedó corregido a privado
   mientras dure el estudio. **Al ejecutar `M-4` hay que volver a cambiarlo.**

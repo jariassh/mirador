@@ -5,33 +5,15 @@
 
 | Prioridad | Total |
 | :-------- | ----: |
-| 🟠 Alto   |     3 |
-| **TOTAL** | **3** |
+| 🟠 Alto   |     2 |
+| **TOTAL** | **2** |
 
-**Se atienden en este orden:** `M-2` → `M-3` → `M-4`. Aprobado por Jonathan el
-2026-09-15.
+**Se atienden en este orden:** `M-3` → `M-4`. Aprobado por Jonathan el
+2026-09-15. `M-2` ya está cerrado.
 
 ---
 
 ## 🟠 Alto
-
-### `M-2` · Asistente de preparación del teléfono
-
-**El problema.** Activar _Opciones de desarrollador_ y _Depuración inalámbrica_
-es el muro donde se cae el usuario no técnico, y hoy Mirador solo lo explica en
-el README, en texto, fuera del programa. Peor: el nombre de cada menú **cambia
-por marca** — no se llama igual en Samsung, en Xiaomi y en Motorola.
-
-**Qué se construye.** Un asistente en pantalla que guíe paso a paso con la ruta
-y los nombres reales del menú de esa marca.
-
-⚠️ **El detalle que define el diseño:** si la depuración todavía no está
-activa, `adb` **no ve el teléfono**, así que no se puede detectar la marca
-automáticamente. El asistente tiene que empezar preguntando la marca.
-
-**Por qué esto y no otra cosa:** es el único terreno donde Mirador queda
-objetivamente mejor que QtScrcpy y AirDroid, porque el público de ellos ya sabe
-hacer esto. Ver [la sesión 239](sessions/2026-09-15-sesion-239-estudio-de-monetizacion-y-decision.md).
 
 ### `M-3` · Diagnóstico en un clic
 
@@ -64,7 +46,10 @@ con `powershell -ExecutionPolicy Bypass`, que a un no técnico lo espanta.
    el aviso de SmartScreen, sin pagar certificado: publicar en la Microsoft
    Store, que firma gratis.
 3. Un pie en el README que lleve a `servicios.jariash.com`.
-4. ⛔ **Volver el repositorio a público** y corregir la fila de `mirador/` en el
+4. Sumar a «Qué hace por ti» del README el asistente de preparación de `M-2`.
+   No se hizo al cerrar `M-2` a propósito: el README no se toca en cada merge
+   —es el generador de conflictos número uno—, y `M-4` ya lo va a editar.
+5. ⛔ **Volver el repositorio a público** y corregir la fila de `mirador/` en el
    `CLAUDE.md` del workspace, que quedó marcada **(PRIVADO)** durante el estudio.
 
 ---

@@ -39,6 +39,18 @@ Está escrito para quien usa Mirador, no para quien lee el código.
   quedan alineados, y la acción principal está siempre a la derecha, como en
   cualquier programa de Windows.
 - Las ventanas ahora llevan **el ícono de Mirador** en vez del de PowerShell.
+- El asistente aclara que **el computador ya quedó listo** y que lo que falta es
+  solo preparar el teléfono.
+
+### Corregido
+
+- **Si tienes scrcpy pero falta `adb`, Mirador ahora lo detecta al abrir** y te
+  ofrece instalarlo. Antes arrancaba como si todo estuviera bien y fallaba más
+  adelante con un «no se encontró ningún celular», que manda a revisar el
+  teléfono cuando el problema estaba en el computador. (`adb` no viene con
+  Windows: llega dentro del mismo paquete de scrcpy.)
+- Ya **no aparece una ventana negra de consola** cuando Mirador necesita pedir
+  permisos de administrador para instalar scrcpy.
 
 ## [1.0.5] — 2026-09-15
 

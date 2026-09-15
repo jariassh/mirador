@@ -257,6 +257,49 @@ devolviendo `Motorola`, y los chequeos de `M-3` siguen los 7 en verde.
 > cumplió el fondo de la regla —mostrar el diseño y esperar aprobación— con
 > **capturas reales del antes y el después**, que además son más fieles.
 
+## `M-7` — coherencia del primer arranque
+
+**De dónde sale.** Jonathan preguntó dos cosas al ver las capturas: si la
+consola se ve siempre por detrás, y si el asistente también instala scrcpy y si
+`adb` viene con Windows. Ninguna de las dos era un malentendido suyo — las dos
+destaparon algo.
+
+**La consola: no, y sí.** En uso real no aparece: el acceso directo que crea
+`instalar.ps1` usa `-WindowStyle Hidden`, y el encabezado del script lo
+documenta como decisión deliberada. Lo que se veía detrás en las capturas era el
+arnés de pruebas, que se lanza a propósito con consola visible. **Pero** al
+verificarlo apareció un descuido real: el relanzamiento como administrador
+—cuando falta scrcpy, winget no pudo instalarlo y el usuario no es admin— se
+hacía **sin** esa bandera, así que la instancia elevada arrancaba con la ventana
+negra a la vista. Corregido.
+
+**adb: Windows no lo trae.** Verificado en el equipo, no de memoria:
+`C:\ProgramData\chocolatey\bin\adb.exe` sale de
+`...\lib\scrcpy\tools\adb.exe` — o sea, del propio paquete de scrcpy.
+
+Y ahí estaba el hueco de verdad: `Asegurar-Scrcpy` comprobaba **solo scrcpy**.
+Casi siempre van juntos, pero no siempre —un scrcpy descomprimido a mano desde
+un `.zip`, o un atajo roto, deja scrcpy en el PATH y `adb` fuera—, y en ese caso
+Mirador arrancaba creyendo que todo estaba bien y fallaba después disfrazado de
+«no se encontró ningún celular», que **manda a revisar el teléfono cuando el
+problema estaba en el computador**. Ahora comprueba las dos piezas y, si falta
+`adb`, lo dice con esas palabras y ofrece instalarlo.
+
+**Y la tercera:** el asistente ahora dice «El computador ya quedó listo. Esto es
+solo el teléfono», porque hasta ahora el usuario no tenía cómo saber que del
+lado del PC no le faltaba nada.
+
+### Cómo se verificó
+
+- `Hay-Scrcpy` y `Hay-Adb` con las herramientas presentes, y con `adb` ausente
+  —sustituyendo el nombre del ejecutable— para confirmar que en ese caso **no**
+  da el arranque por bueno.
+- **El caso nuevo, de punta a punta:** se lanzó `Asegurar-Scrcpy` con `adb`
+  ausente, se respondió **No** al cuadro con el teclado, y devolvió `False`
+  dejando escrito «scrcpy esta pero adb no» en el registro.
+- Que el relanzamiento elevado ya lleva `-WindowStyle Hidden`.
+- Capturado el asistente con la línea nueva y la lista recolocada.
+
 ## Estado al cerrar
 
 - `M-1` cerrado — el estudio respondió las tres preguntas y hay decisión tomada.
@@ -264,6 +307,8 @@ devolviendo `Motorola`, y los chequeos de `M-3` siguen los 7 en verde.
 - `M-2` cerrado — asistente de preparación, verificado contra dos teléfonos.
 - `M-3` cerrado — diagnóstico en un clic, con el caso de fallo probado.
 - `M-6` cerrado — orden visual de los diálogos, con la regresión verificada.
+- `M-7` cerrado — coherencia del primer arranque: adb verificado, consola oculta
+  al elevar y el asistente aclarando que el PC ya está listo.
 - Abierto: `M-4` (la vitrina: GIF, instalador Inno Setup, README y volver a
   público).
 - El `CLAUDE.md` del workspace decía **(PÚBLICO)**; quedó corregido a privado

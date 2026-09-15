@@ -311,10 +311,37 @@ function Nuevo-Boton {
 # Instalacion de scrcpy (trae adb en el mismo paquete)
 # ---------------------------------------------------------------------------
 
-function Asegurar-Scrcpy {
-    if (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue) { return $true }
+function Hay-Scrcpy { return [bool] (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue) }
+function Hay-Adb    { return [bool] (Get-Command $script:AdbExe    -ErrorAction SilentlyContinue) }
 
-    Escribir-Log 'scrcpy no esta instalado'
+<#
+    Deja el COMPUTADOR listo: scrcpy y adb.
+
+    adb no viene con Windows — lo trae el paquete de scrcpy, en su misma
+    carpeta. Por eso casi siempre aparecen juntos... pero no siempre: un
+    scrcpy descomprimido a mano desde un .zip, o un atajo roto, deja scrcpy
+    en el PATH y adb fuera.
+
+    Comprobar solo scrcpy hacia que Mirador arrancara creyendo que todo
+    estaba bien y fallara mas adelante disfrazado de "no se encontro ningun
+    celular", que manda al usuario a revisar el telefono cuando el problema
+    estaba en el computador.
+#>
+function Asegurar-Scrcpy {
+    if ((Hay-Scrcpy) -and (Hay-Adb)) { return $true }
+
+    if ((Hay-Scrcpy) -and -not (Hay-Adb)) {
+        Escribir-Log 'scrcpy esta pero adb no'
+        $r = [System.Windows.Forms.MessageBox]::Show(
+            "Tienes scrcpy, pero falta «adb», que es la pieza que habla con el teléfono.`n`nWindows no lo trae: viene dentro del mismo paquete de scrcpy.`n`n¿Quieres que lo instale ahora?",
+            'Mirador', 'YesNo', 'Warning')
+        if ($r -ne 'Yes') {
+            Escribir-Log 'El usuario no quiso instalar adb'
+            return $false
+        }
+    } else {
+        Escribir-Log 'scrcpy no esta instalado'
+    }
 
     # winget primero: instala sin pedir permisos de administrador.
     if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -323,7 +350,7 @@ function Asegurar-Scrcpy {
         & winget install --id Genymobile.scrcpy --exact --silent `
             --accept-source-agreements --accept-package-agreements | Out-Null
         Refrescar-Path
-        if (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue) {
+        if ((Hay-Scrcpy) -and (Hay-Adb)) {
             Escribir-Log 'Instalado con winget'
             return $true
         }
@@ -336,8 +363,11 @@ function Asegurar-Scrcpy {
 
     if (-not $esAdmin) {
         Mostrar-Mensaje "Hay que instalar scrcpy y Windows va a pedir permiso de administrador."
+        # -WindowStyle Hidden tambien aca: sin el, la instancia elevada
+        # arrancaba con la consola negra a la vista, que es justo lo que el
+        # resto del programa evita.
         Start-Process powershell -Verb RunAs -ArgumentList `
-            "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+            "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$PSCommandPath`""
         return $false
     }
 
@@ -354,8 +384,9 @@ function Asegurar-Scrcpy {
     & choco install scrcpy -y | Out-Null
     Refrescar-Path
 
-    if (-not (Get-Command $script:ScrcpyExe -ErrorAction SilentlyContinue)) {
-        Mostrar-Mensaje "No se pudo instalar scrcpy. Instálalo a mano con 'winget install Genymobile.scrcpy'." 'Mirador' 'Error'
+    if (-not ((Hay-Scrcpy) -and (Hay-Adb))) {
+        $falta = if (Hay-Scrcpy) { 'adb' } else { 'scrcpy' }
+        Mostrar-Mensaje "No se pudo dejar listo «$falta».`n`nInstálalo a mano con este comando y vuelve a abrir Mirador:`n`nwinget install Genymobile.scrcpy" 'Mirador' 'Error'
         return $false
     }
 
@@ -887,9 +918,14 @@ function Marca-Sugerida {
 function Mostrar-ElegirMarca {
     param([string] $Sugerida)
 
-    $f = Nueva-Ventana 'Preparar mi teléfono' 456 356
+    $f = Nueva-Ventana 'Preparar mi teléfono' 456 382
 
     $y = Nuevo-Encabezado $f '¿Qué marca es tu teléfono?' 'El menú se llama distinto en cada marca'
+
+    # Sin esta linea el usuario no tiene como saber que del lado del PC no le
+    # falta nada: scrcpy y adb ya quedaron instalados antes de llegar aca.
+    $f.Controls.Add((Nueva-Etiqueta 'El computador ya quedó listo. Esto es solo el teléfono.' 20 $y 400 18))
+    $y = $y + 26
 
     $lista = New-Object System.Windows.Forms.ListBox
     $lista.Location = New-Object System.Drawing.Point(20, $y)
@@ -913,7 +949,7 @@ function Mostrar-ElegirMarca {
     $botones = Nueva-BarraBotones $f @(
         @{ Texto = 'Cancelar';  Accion = { $elegido.Valor = ''; $f.Close() } },
         @{ Texto = 'Siguiente'; Accion = { $elegido.Valor = [string] $lista.SelectedItem; $f.Close() } }
-    ) 252 140
+    ) 278 140
     $f.CancelButton = $botones[0]
     $f.AcceptButton = $botones[1]
 
